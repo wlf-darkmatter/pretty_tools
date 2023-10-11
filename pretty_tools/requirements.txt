@@ -1,0 +1,23 @@
+rich
+gpuinfo
+imagesize
+colorlog==6.7.0
+# PyNvCodec
+vispy
+imgaug
+
+pyopencl
+
+einops
+
+pyopengl
+av
+pillow==9.*
+streamlit>=1.23.1
+
+black>=23.9.1 #* 格式化工具 一定要安装，反正这个包很小
+klib>=1.1.2
+nptyping # numpy 类型提示
+line_profiler
+objgraph
+scipy>=1.11.0

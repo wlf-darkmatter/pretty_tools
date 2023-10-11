@@ -1,0 +1,15 @@
+__pycache__
+**/*.pyc
+
+dist
+*.egg-info
+**/.DS_Store
+**/tmp
+**/log/
+
+**/build
+datastruct/src/*.c
+datastruct/src/*.html
+**/*.so
+.eggs
+
