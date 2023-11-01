@@ -19,11 +19,14 @@ default_file_log_level = TRACE
 
 class X_Logging:
     """
-    The available color names are black, red, green, yellow, blue, purple, cyan and white.
-    {color}, fg_{color}, bg_{color}: Foreground and background colors.
-    bold, bold_{color}, fg_bold_{color}, bg_bold_{color}: Bold/bright colors.
-    thin, thin_{color}, fg_thin_{color}: Thin colors (terminal dependent).
-    reset: Clear all formatting (both foreground and background colors).
+    Example
+    -------
+
+    >>> x_logger = X_Logging("Calib")
+    >>> logger = x_logger.logger
+    >>> logger.info("这样就能打印日志了")
+
+
     """
 
     def __init__(
