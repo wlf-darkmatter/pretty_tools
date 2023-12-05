@@ -8,4 +8,4 @@ include(CMakeFindDependencyMacro)
 # Any extra setup
 
 # Add the targets file
-include("${CMAKE_CURRENT_LIST_DIR}/PrettyToolsTargets.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/pretty_tools-targets.cmake")

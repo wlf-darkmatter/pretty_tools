@@ -22,7 +22,7 @@ set(PrettyTools_CPP_INSTALL_CMAKEDIR "${CMAKE_INSTALL_LIBDIR}/cmake/pretty_tools
   CACHE STRING "Path to install the CMake package to")
 
 # 临时安装路径
-set(CMAKE_INSTALL_PREFIX "/workspace/tmp")
+# set(CMAKE_INSTALL_PREFIX "/workspace/tmp")
 
 #! 同时构建 动态链接库 和 静态链接库
 #----------------------------------------------------------------
@@ -31,9 +31,9 @@ set(PRETTY_TOOLS_CPP_SRC ${PRETTY_TOOLS_CPP_SRC} ${datastruct_src})
 set(PRETTY_TOOLS_CPP_INC_DIRS ${PRETTY_TOOLS_CPP_INC_DIRS} ./inc/datastruct)
 
 #一些要统一的临时名称, 确保会被unset
-set(config_version_name PrettyToolsConfigVersion)
-set(config_name PrettyToolsConfig)
-set(target_name PrettyToolsTargets)
+set(config_version_name pretty_tools-configversion)
+set(config_name pretty_tools-config)
+set(target_name pretty_tools-targets)
 
 #----------------------------------------------------------------
 
