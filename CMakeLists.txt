@@ -1,18 +1,19 @@
 cmake_minimum_required(VERSION 3.8)
 
 project(PrettyTools_CPP VERSION 0.1.9 LANGUAGES CXX)
-message(STATUS "=== PrettyTools_CPP Cmaking ===")
-
-set(PrettyTools_CPP_MAIN_PROJECT OFF)
-
-if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
-        set(PrettyTools_CPP_MAIN_PROJECT ON)
-endif()
+message(STATUS "=== ${PROJECT_NAME} Cmaking ===")
 
 include(CMakeDependentOption)
 include(CheckCXXCompilerFlag)
 include(GNUInstallDirs)
+
 # include(CTest)
+
+# 一些要统一的临时名称, 确保会被unset
+set(TARGET_NAME pretty_tools)
+set(cmake_config_version_name ${TARGET_NAME}-configversion)
+set(cmake_config_name ${TARGET_NAME}-config)
+set(cmake_target_name ${TARGET_NAME}-targets)
 
 # 临时安装路径
 # set(CMAKE_INSTALL_PREFIX "/workspace/tmp")
@@ -22,12 +23,6 @@ include(GNUInstallDirs)
 aux_source_directory(src/datastruct datastruct_src)
 set(PRETTY_TOOLS_SRC ${PRETTY_TOOLS_SRC} ${datastruct_src})
 set(PRETTY_TOOLS_INC_DIRS ${PRETTY_TOOLS_INC_DIRS} inc/datastruct)
-set(TARGET_NAME pretty_tools)
-
-# 一些要统一的临时名称, 确保会被unset
-set(config_version_name pretty_tools-configversion)
-set(config_name pretty_tools-config)
-set(target_name pretty_tools-targets)
 
 # ----------------------------------------------------------------
 message(STATUS "PRETTY_TOOLS_SRC = ${PRETTY_TOOLS_SRC}")
@@ -46,51 +41,59 @@ set_target_properties(${TARGET_NAME}_static PROPERTIES OUTPUT_NAME ${TARGET_NAME
 
 # ! 安装部分
 install(TARGETS ${TARGET_NAME}_static
-        LIBRARY DESTINATION lib # 动态库安装路径
-        ARCHIVE DESTINATION lib # 静态库安装路径
-        RUNTIME DESTINATION bin # 可执行文件安装路径
-        PUBLIC_HEADER DESTINATION include # 头文件安装路径
+    LIBRARY DESTINATION lib/${TARGET_NAME} # 动态库安装路径
+    ARCHIVE DESTINATION lib/${TARGET_NAME} # 静态库安装路径
+
+    # RUNTIME DESTINATION bin # 可执行文件安装路径
+
+    # PUBLIC_HEADER DESTINATION include # 头文件安装路径
 )
 
 install(TARGETS ${TARGET_NAME}_shared
-        EXPORT ${target_name}
-        LIBRARY DESTINATION lib # 动态库安装路径
-        ARCHIVE DESTINATION lib # 静态库安装路径
-        RUNTIME DESTINATION bin # 可执行文件安装路径
-        PUBLIC_HEADER DESTINATION include # 头文件安装路径
-)
+    EXPORT ${cmake_target_name}
+    LIBRARY DESTINATION lib/${TARGET_NAME} # 动态库安装路径
+    ARCHIVE DESTINATION lib/${TARGET_NAME} # 静态库安装路径
 
-set(EXPORT_TARGETS ${TARGET_NAME}) # * 用于导出cmake变量
+    # RUNTIME DESTINATION bin # 可执行文件安装路径
+
+    # PUBLIC_HEADER DESTINATION include # 头文件安装路径
+)
 
 # 安装头文件
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/inc/
-        DESTINATION include/${TARGET_NAME})
+    DESTINATION include/${TARGET_NAME})
 
 # ================= 引用辅助工具 =================
 include(CMakePackageConfigHelpers)
 
 # 声明版本信息
 write_basic_package_version_file(
-        ${config_version_name}.cmake
-        VERSION ${PACKAGE_VERSION}
-        COMPATIBILITY AnyNewerVersion # 表示该函数库向下兼容
+    ${cmake_config_version_name}.cmake
+    VERSION ${PACKAGE_VERSION}
+    COMPATIBILITY AnyNewerVersion # 表示该函数库向下兼容
 )
 
 # 安装find_package()所需要的配置文件
-install(EXPORT ${target_name}
-        FILE ${target_name}.cmake
-        NAMESPACE ${TARGET_NAME}::
-        DESTINATION lib/cmake/${TARGET_NAME}
+install(EXPORT ${cmake_target_name}
+    FILE ${cmake_target_name}.cmake
+    NAMESPACE ${TARGET_NAME}::
+    DESTINATION lib/cmake/${TARGET_NAME}
 )
+
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${cmake_config_name}.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/${cmake_config_version_name}.cmake"
+    DESTINATION lib/cmake/${TARGET_NAME}
+)
+
+set(PACKAGE_PRETTY_TOOLS_INCLUDE_DIRS ${CMAKE_INSTALL_PREFIX}/include/${TARGET_NAME})
+set(PACKAGE_PRETTY_TOOLS_LIBS_DIRS ${CMAKE_INSTALL_PREFIX}/lib/${TARGET_NAME})
+set(EXPORT_TARGETS ${TARGET_NAME}) # * 当前版本是将所有的实现文件都编译到一起，以后再考虑分开编译
 
 # @ONLY：限制变量替换，让其只替换被@VAR@引用的变量(那么${VAR}格式的变量将不会被替换)。这在配置${VAR}语法的脚本时是非常有用的
-configure_file(${config_name}.cmake.in ${config_name}.cmake @ONLY)
+configure_file(${cmake_config_name}.cmake.in ${cmake_config_name}.cmake @ONLY)
 
-install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${config_name}.cmake"
-        "${CMAKE_CURRENT_BINARY_DIR}/${config_version_name}.cmake"
-        DESTINATION lib/cmake/${TARGET_NAME}
-)
-set(FININAL_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
-unset(config_version_name)
-unset(config_name)
-unset(target_name)
+unset(PACKAGE_PRETTY_TOOLS_INCLUDE_DIRS)
+unset(PACKAGE_PRETTY_TOOLS_LIBS_DIRS)
+unset(cmake_config_version_name)
+unset(cmake_config_name)
+unset(cmake_target_name)

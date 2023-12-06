@@ -1,16 +1,16 @@
-# - Config file for the pretty_tools package
+# - Config file for the @TARGET_NAME@ package
 # It defines the following variables
 # PRETTY_TOOLS_INCLUDE_DIRS       - include directory
 # PRETTY_TOOLS_LIBS_DIRS       - directory containing libraries
 # PRETTY_TOOLS_LIBS         - libraries to link against
-# PRETTY_TOOLS_SRC        - source files
 include(CMakeFindDependencyMacro)
 
 # 如果想要获取Config阶段的变量，可以使用这个
-set_and_check(PRETTY_TOOLS_INCLUDE_DIRS "@PRETTY_TOOLS_INC_DIRS@")
-set_and_check(PRETTY_TOOLS_SRC "@CMAKE_INSTALL_PREFIX@/@PRETTY_TOOLS_SRC@")
-set_and_check(PRETTY_TOOLS_LIBS_DIRS "@CMAKE_INSTALL_PREFIX@/lib")
-set_and_check(PRETTY_TOOLS_LIBS "@EXPORT_TARGETS@")
+set(PRETTY_TOOLS_INCLUDE_DIRS "@PACKAGE_PRETTY_TOOLS_INCLUDE_DIRS@")
+set(PRETTY_TOOLS_LIBS_DIRS "@PACKAGE_PRETTY_TOOLS_LIBS_DIRS@")
+
+# ! 当前版本是将所有的实现文件都编译到一起，以后再考虑分开编译
+set(PRETTY_TOOLS_LIBS "@EXPORT_TARGETS@")
 
 # 如果你的项目需要依赖其他的库，可以使用下面语句，用法与find_package相同
 # find_dependency(MYDEP REQUIRED)
