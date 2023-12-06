@@ -27,8 +27,8 @@ set(PrettyTools_CPP_INSTALL_CMAKEDIR "${CMAKE_INSTALL_LIBDIR}/cmake/pretty_tools
 #! 同时构建 动态链接库 和 静态链接库
 #----------------------------------------------------------------
 aux_source_directory(./src/datastruct datastruct_src)
-set(PRETTY_TOOLS_CPP_SRC ${PRETTY_TOOLS_CPP_SRC} ${datastruct_src})
-set(PRETTY_TOOLS_CPP_INC_DIRS ${PRETTY_TOOLS_CPP_INC_DIRS} ./inc/datastruct)
+set(PRETTY_TOOLS_SRC ${PRETTY_TOOLS_SRC} ${datastruct_src})
+set(PRETTY_TOOLS_INC_DIRS ${PRETTY_TOOLS_INC_DIRS} ./inc/datastruct)
 
 #一些要统一的临时名称, 确保会被unset
 set(config_version_name pretty_tools-configversion)
@@ -37,13 +37,13 @@ set(target_name pretty_tools-targets)
 
 #----------------------------------------------------------------
 
-message(STATUS "PRETTY_TOOLS_CPP_SRC = ${PRETTY_TOOLS_CPP_SRC}")
-message(STATUS "PRETTY_TOOLS_CPP_INC_DIRS = ${PRETTY_TOOLS_CPP_INC_DIRS}")
+message(STATUS "PRETTY_TOOLS_SRC = ${PRETTY_TOOLS_SRC}")
+message(STATUS "PRETTY_TOOLS_INC_DIRS = ${PRETTY_TOOLS_INC_DIRS}")
 
-add_library(pretty-tools-cpp_shared SHARED ${PRETTY_TOOLS_CPP_SRC})
-add_library(pretty-tools-cpp_static STATIC ${PRETTY_TOOLS_CPP_SRC})
-target_include_directories(pretty-tools-cpp_shared PRIVATE ${PRETTY_TOOLS_CPP_INC_DIRS})
-target_include_directories(pretty-tools-cpp_static PUBLIC ${PRETTY_TOOLS_CPP_INC_DIRS})
+add_library(pretty-tools-cpp_shared SHARED ${PRETTY_TOOLS_SRC})
+add_library(pretty-tools-cpp_static STATIC ${PRETTY_TOOLS_SRC})
+target_include_directories(pretty-tools-cpp_shared PRIVATE ${PRETTY_TOOLS_INC_DIRS})
+target_include_directories(pretty-tools-cpp_static PUBLIC ${PRETTY_TOOLS_INC_DIRS})
 
 # 将 pretty-tools-cpp_shared 重新命名为 pretty-tools-cpp.so
 set_target_properties (pretty-tools-cpp_shared PROPERTIES OUTPUT_NAME "pretty-tools-cpp")
@@ -68,6 +68,9 @@ install(TARGETS pretty-tools-cpp_shared
         RUNTIME DESTINATION bin  # 可执行文件安装路径
         PUBLIC_HEADER DESTINATION include  # 头文件安装路径
         )
+
+set(EXPORT_TARGETS pretty-tools-cpp) #* 用于导出cmake变量
+
 # 安装头文件
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/inc/
         DESTINATION include/pretty-tools)
