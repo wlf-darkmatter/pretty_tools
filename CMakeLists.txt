@@ -33,9 +33,6 @@ add_library(${TARGET_NAME}_static STATIC ${PRETTY_TOOLS_SRC})
 target_include_directories(${TARGET_NAME}_shared PRIVATE ${PRETTY_TOOLS_INC_DIRS})
 target_include_directories(${TARGET_NAME}_static PUBLIC ${PRETTY_TOOLS_INC_DIRS})
 
-set(EXPORT_LIST_TARGETS ${EXPORT_LIST_TARGETS} ${TARGET_NAME}.so) # * 当前版本是将所有的实现文件都编译到一起，以后再考虑分开编译
-set(EXPORT_LIST_TARGETS ${EXPORT_LIST_TARGETS} ${TARGET_NAME}.a) # * 当前版本是将所有的实现文件都编译到一起，以后再考虑分开编译
-
 # 将 pretty-tools-cpp_shared 重新命名为 pretty-tools-cpp.so
 set_target_properties(${TARGET_NAME}_shared PROPERTIES OUTPUT_NAME ${TARGET_NAME})
 
@@ -61,6 +58,8 @@ install(TARGETS ${TARGET_NAME}_shared
 
     # PUBLIC_HEADER DESTINATION include # 头文件安装路径
 )
+set(EXPORT_LIST_TARGETS_SHARED ${EXPORT_LIST_TARGETS_SHARED} ${CMAKE_INSTALL_PREFIX}/lib/${TARGET_NAME}/lib${TARGET_NAME}.so) # * 当前版本是将所有的实现文件都编译到一起，以后再考虑分开编译
+set(EXPORT_LIST_TARGETS_STATIC ${EXPORT_LIST_TARGETS_STATIC} ${CMAKE_INSTALL_PREFIX}/lib/${TARGET_NAME}/lib${TARGET_NAME}.a) # * 当前版本是将所有的实现文件都编译到一起，以后再考虑分开编译
 
 # 安装头文件
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/inc/
