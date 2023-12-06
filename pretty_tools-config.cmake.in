@@ -10,7 +10,7 @@ set(PRETTY_TOOLS_INCLUDE_DIRS "@PACKAGE_PRETTY_TOOLS_INCLUDE_DIRS@")
 set(PRETTY_TOOLS_LIBS_DIRS "@PACKAGE_PRETTY_TOOLS_LIBS_DIRS@")
 
 # ! 当前版本是将所有的实现文件都编译到一起，以后再考虑分开编译
-set(PRETTY_TOOLS_LIBS "@EXPORT_TARGETS@")
+set(PRETTY_TOOLS_LIBRARIES "@EXPORT_LIST_TARGETS@")
 
 # 如果你的项目需要依赖其他的库，可以使用下面语句，用法与find_package相同
 # find_dependency(MYDEP REQUIRED)

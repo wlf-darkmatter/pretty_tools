@@ -33,6 +33,9 @@ add_library(${TARGET_NAME}_static STATIC ${PRETTY_TOOLS_SRC})
 target_include_directories(${TARGET_NAME}_shared PRIVATE ${PRETTY_TOOLS_INC_DIRS})
 target_include_directories(${TARGET_NAME}_static PUBLIC ${PRETTY_TOOLS_INC_DIRS})
 
+set(EXPORT_LIST_TARGETS ${EXPORT_LIST_TARGETS} ${TARGET_NAME}.so) # * 当前版本是将所有的实现文件都编译到一起，以后再考虑分开编译
+set(EXPORT_LIST_TARGETS ${EXPORT_LIST_TARGETS} ${TARGET_NAME}.a) # * 当前版本是将所有的实现文件都编译到一起，以后再考虑分开编译
+
 # 将 pretty-tools-cpp_shared 重新命名为 pretty-tools-cpp.so
 set_target_properties(${TARGET_NAME}_shared PROPERTIES OUTPUT_NAME ${TARGET_NAME})
 
@@ -87,7 +90,6 @@ install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${cmake_config_name}.cmake"
 
 set(PACKAGE_PRETTY_TOOLS_INCLUDE_DIRS ${CMAKE_INSTALL_PREFIX}/include/${TARGET_NAME})
 set(PACKAGE_PRETTY_TOOLS_LIBS_DIRS ${CMAKE_INSTALL_PREFIX}/lib/${TARGET_NAME})
-set(EXPORT_TARGETS ${TARGET_NAME}) # * 当前版本是将所有的实现文件都编译到一起，以后再考虑分开编译
 
 # @ONLY：限制变量替换，让其只替换被@VAR@引用的变量(那么${VAR}格式的变量将不会被替换)。这在配置${VAR}语法的脚本时是非常有用的
 configure_file(${cmake_config_name}.cmake.in ${cmake_config_name}.cmake @ONLY)
