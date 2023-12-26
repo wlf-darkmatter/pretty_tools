@@ -20,3 +20,14 @@ set(PRETTY_TOOLS_LIBRARIES_STATIC "@EXPORT_LIST_TARGETS_STATIC@")
 
 # Add the targets file
 include("${CMAKE_CURRENT_LIST_DIR}/pretty_tools-targets.cmake")
+
+# ! ============================== YAML-CPP 部分 ==============================
+# YAML_CPP_INCLUDE_DIR       - include directory
+# YAML_CPP_LIBRARY_DIR       - directory containing libraries
+# YAML_CPP_SHARED_LIBS_BUILT - whether we have built shared libraries or not
+# YAML_CPP_LIBRARIES         - libraries to link against
+set_and_check(YAML_CPP_INCLUDE_DIR "@PACKAGE_CMAKE_INSTALL_INCLUDEDIR@")
+set_and_check(YAML_CPP_LIBRARY_DIR "@PACKAGE_CMAKE_INSTALL_LIBDIR@")
+
+# Are we building shared libraries?
+set(YAML_CPP_SHARED_LIBS_BUILT @YAML_BUILD_SHARED_LIBS@)
