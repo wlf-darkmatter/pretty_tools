@@ -29,6 +29,9 @@ aux_source_directory(src/datastruct datastruct_src)
 set(PRETTY_TOOLS_SRC ${PRETTY_TOOLS_SRC} ${datastruct_src})
 set(PRETTY_TOOLS_INC_DIRS ${PRETTY_TOOLS_INC_DIRS} inc/datastruct)
 
+set(PACKAGE_CMAKE_INSTALL_INCLUDEDIR ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR}/${MAIN_TARGET_NAME})
+set(PACKAGE_CMAKE_INSTALL_LIBDIR ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/${MAIN_TARGET_NAME})
+
 # ----------------------------------------------------------------
 message(STATUS "PRETTY_TOOLS_SRC = ${PRETTY_TOOLS_SRC}")
 message(STATUS "PRETTY_TOOLS_INC_DIRS = ${PRETTY_TOOLS_INC_DIRS}")
@@ -44,10 +47,11 @@ set_target_properties(${MAIN_TARGET_NAME}_shared PROPERTIES OUTPUT_NAME ${MAIN_T
 # 将 pretty-tools-cpp_static  重新命名为 pretty-tools-cpp.a
 set_target_properties(${MAIN_TARGET_NAME}_static PROPERTIES OUTPUT_NAME ${MAIN_TARGET_NAME})
 
+
 # ! 安装部分
 install(TARGETS ${MAIN_TARGET_NAME}_static
-    LIBRARY DESTINATION lib/${MAIN_TARGET_NAME} # 动态库安装路径
-    ARCHIVE DESTINATION lib/${MAIN_TARGET_NAME} # 静态库安装路径
+    LIBRARY DESTINATION ${PACKAGE_CMAKE_INSTALL_LIBDIR} # 动态库安装路径
+    ARCHIVE DESTINATION ${PACKAGE_CMAKE_INSTALL_LIBDIR} # 静态库安装路径
 
     # RUNTIME DESTINATION bin # 可执行文件安装路径
     # PUBLIC_HEADER DESTINATION include # 头文件安装路径
@@ -66,37 +70,17 @@ set(EXPORT_LIST_TARGETS_STATIC ${EXPORT_LIST_TARGETS_STATIC} ${CMAKE_INSTALL_PRE
 
 # 安装头文件
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/inc/
-    DESTINATION include/${MAIN_TARGET_NAME})
-
-# ================= 引用辅助工具 =================
-include(CMakePackageConfigHelpers)
-
-# 声明版本信息
-write_basic_package_version_file(
-    ${cmake_config_version_name}.cmake
-    VERSION ${PACKAGE_VERSION}
-    COMPATIBILITY AnyNewerVersion # 表示该函数库向下兼容
-)
-
-# 安装find_package()所需要的配置文件
-install(EXPORT ${cmake_target_name}
-    FILE ${cmake_target_name}.cmake
-    NAMESPACE ${MAIN_TARGET_NAME}::
-    DESTINATION lib/cmake/${MAIN_TARGET_NAME}
-)
-
-set(PACKAGE_PRETTY_TOOLS_INCLUDE_DIRS ${CMAKE_INSTALL_PREFIX}/include/${MAIN_TARGET_NAME})
-set(PACKAGE_PRETTY_TOOLS_LIBS_DIRS ${CMAKE_INSTALL_PREFIX}/lib/${MAIN_TARGET_NAME})
-
-# @ONLY：限制变量替换，让其只替换被@VAR@引用的变量(那么${VAR}格式的变量将不会被替换)。这在配置${VAR}语法的脚本时是非常有用的
-configure_file(${cmake_config_name}.cmake.in ${cmake_config_name}.cmake @ONLY)
+    DESTINATION ${PACKAGE_CMAKE_INSTALL_INCLUDEDIR})
 
 # ! ============================== YAML-CPP 部分 ==============================
 message(STATUS "=== module YAML-CPP Cmaking ===")
 option(YAML_BUILD_SHARED_LIBS "Build yaml-cpp shared library" ${YAML_BUILD_SHARED_LIBS}) # 如果要生成为 SHARED ，可以指定 -DYAML_BUILD_SHARED_LIBS=ON
 
-set(YAML_CPP_INSTALL_CMAKEDIR "${CMAKE_INSTALL_LIBDIR}/cmake/${MAIN_TARGET_NAME}"
+#----------------
+set(YAML_CPP_INSTALL_CMAKEDIR ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/cmake/${MAIN_TARGET_NAME}
     CACHE STRING "Path to install the CMake package to")
+
+#----------------
 
 if(YAML_BUILD_SHARED_LIBS)
     set(yaml-cpp-type SHARED)
@@ -106,10 +90,8 @@ else()
     set(yaml-cpp-label-postfix "static")
 endif()
 
-set(contrib-pattern "src/yaml-cpp/contrib/*.cpp")
-set(src-pattern "src/yaml-cpp/*.cpp")
-file(GLOB yaml-cpp-contrib-sources ${contrib-pattern})
-file(GLOB yaml-cpp-sources ${src-pattern})
+file(GLOB yaml-cpp-contrib-sources "src/yaml-cpp/contrib/*.cpp")
+file(GLOB yaml-cpp-sources "src/yaml-cpp/*.cpp")
 add_library(yaml-cpp ${yaml-cpp-type} "")
 add_library(yaml-cpp::yaml-cpp ALIAS yaml-cpp)
 
@@ -133,18 +115,40 @@ set_target_properties(yaml-cpp
     PROPERTIES
     CXX_STANDARD 11)
 
+
 install(TARGETS yaml-cpp
     EXPORT yaml-cpp-targets
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}/${MAIN_TARGET_NAME}
-    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}/${MAIN_TARGET_NAME})
-
+    LIBRARY DESTINATION ${PACKAGE_CMAKE_INSTALL_INCLUDEDIR}
+    ARCHIVE DESTINATION ${PACKAGE_CMAKE_INSTALL_INCLUDEDIR})
 install(EXPORT yaml-cpp-targets
     NAMESPACE yaml-cpp::
     DESTINATION "${YAML_CPP_INSTALL_CMAKEDIR}")
 
+# ================= 引用辅助工具 =================
+include(CMakePackageConfigHelpers)
+
+# 声明版本信息
+write_basic_package_version_file(
+    ${cmake_config_version_name}.cmake
+    VERSION ${PACKAGE_VERSION}
+    COMPATIBILITY AnyNewerVersion # 表示该函数库向下兼容
+)
+
+# 安装find_package()所需要的配置文件
+install(EXPORT ${cmake_target_name}
+    FILE ${cmake_target_name}.cmake
+    NAMESPACE ${MAIN_TARGET_NAME}::
+    DESTINATION lib/cmake/${MAIN_TARGET_NAME}
+)
+
+
+# @ONLY：限制变量替换，让其只替换被@VAR@引用的变量(那么${VAR}格式的变量将不会被替换)。这在配置${VAR}语法的脚本时是非常有用的
+configure_file(${cmake_config_name}.cmake.in ${cmake_config_name}.cmake @ONLY)
+
+
 # ---------------------  后续处理 -----------------------
-unset(PACKAGE_PRETTY_TOOLS_INCLUDE_DIRS)
-unset(PACKAGE_PRETTY_TOOLS_LIBS_DIRS)
+unset(PACKAGE_CMAKE_INSTALL_INCLUDEDIR)
+unset(PACKAGE_CMAKE_INSTALL_LIBDIR)
 unset(cmake_config_version_name)
 unset(cmake_config_name)
 unset(cmake_target_name)

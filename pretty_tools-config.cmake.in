@@ -6,8 +6,8 @@
 include(CMakeFindDependencyMacro)
 
 # 如果想要获取Config阶段的变量，可以使用这个
-set(PRETTY_TOOLS_INCLUDE_DIRS "@PACKAGE_PRETTY_TOOLS_INCLUDE_DIRS@")
-set(PRETTY_TOOLS_LIBS_DIRS "@PACKAGE_PRETTY_TOOLS_LIBS_DIRS@")
+set(PRETTY_TOOLS_INCLUDE_DIRS "@PACKAGE_CMAKE_INSTALL_INCLUDEDIR@")
+set(PRETTY_TOOLS_LIBS_DIRS "@PACKAGE_CMAKE_INSTALL_LIBDIR@")
 
 # ! 当前版本是将所有的实现文件都编译到一起，以后再考虑分开编译
 set(PRETTY_TOOLS_LIBRARIES_SHARED "@EXPORT_LIST_TARGETS_SHARED@")
@@ -26,8 +26,9 @@ include("${CMAKE_CURRENT_LIST_DIR}/pretty_tools-targets.cmake")
 # YAML_CPP_LIBRARY_DIR       - directory containing libraries
 # YAML_CPP_SHARED_LIBS_BUILT - whether we have built shared libraries or not
 # YAML_CPP_LIBRARIES         - libraries to link against
-set_and_check(YAML_CPP_INCLUDE_DIR "@PACKAGE_CMAKE_INSTALL_INCLUDEDIR@")
-set_and_check(YAML_CPP_LIBRARY_DIR "@PACKAGE_CMAKE_INSTALL_LIBDIR@")
+set(YAML_CPP_INCLUDE_DIR "@PACKAGE_CMAKE_INSTALL_INCLUDEDIR@")
+set(YAML_CPP_LIBRARY_DIR "@PACKAGE_CMAKE_INSTALL_LIBDIR@")
+set(YAML_CPP_LIBRARIES "@PACKAGE_CMAKE_INSTALL_LIBDIR@/libyaml-cpp.a") # libyaml-cpp 并没有写合理的 YAML_CPP_LIBRARIES，这里手动指定一下
 
 # Are we building shared libraries?
 set(YAML_CPP_SHARED_LIBS_BUILT @YAML_BUILD_SHARED_LIBS@)
