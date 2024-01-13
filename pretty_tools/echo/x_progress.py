@@ -272,6 +272,8 @@ class X_Progress(Generic[T]):
         assert self.task is not None
         self.task.finished_time = self.task.elapsed
         self.stop_sub()
+        if self.task_id:
+            X_Progress._echo_plus.remove_task(self.task_id)
         if X_Progress._echo_plus.finished:
             X_Progress._echo_plus.stop()
 
