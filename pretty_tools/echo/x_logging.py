@@ -26,6 +26,8 @@ class X_Logging:
     >>> logger = x_logger.logger
     >>> logger.info("这样就能打印日志了")
 
+    20240120 更新
+    1. 如果是多卡训练，会出现日志的重复打印，所以添加初始化参数，说明这个日志是哪个卡的，避免重复打印，默认卡 0 会打印信息
 
     """
 
@@ -36,9 +38,20 @@ class X_Logging:
         stream_level=default_stream_level,  # * 终端打印的等级
         file_log_level=default_file_log_level,  # * 日志文件的等级
         fileError_log_level=default_fileError_log_level,  # * 错误日志的等级
+        multi_process_mode=False,  # * 是否多进程模式，如果是多进程模式，会通过，且仅会通过一个全局变量来判断当前进程的排序，默认使用最先启动的进程来打印，避免重复打印
     ) -> None:
-        self.logger = logging.getLogger(logname)
+        """
+        Args:
+            logname (str, optional): 日志名称. Defaults to "base".
+            dir_log (str, optional): 日志文件目录. Defaults to None.
+            stream_level (int, optional): 终端打印的等级. Defaults to default_stream_level.
+            file_log_level (int, optional): 日志文件的等级. Defaults to default_file_log_level.
+            fileError_log_level (int, optional): 错误日志的等级. Defaults to default_fileError_log_level.
+            multi_process_mode (bool, optional): 是否多进程模式，如果是多进程模式，会通过，且仅会通过一个全局变量来判断当前进程的排序，默认使用最先启动的进程来打印，避免重复打印. Defaults to False.
 
+        """
+        self.logger = logging.getLogger(logname)
+        self.multi_process_mode = multi_process_mode
         setattr(self.logger, "x_logging", self)
 
         self.__now_time = datetime.now().strftime("%Y-%m-%d")
@@ -64,6 +77,21 @@ class X_Logging:
         # * 分配处理器
         self.logger.addHandler(handler_Stream)
 
+    def set_rank(self, world_size: int, local_size: int, rank: int):
+        self.world_size = world_size  #! 当前启动的所有的进程的数量 (所有机器进程的和)
+        self.rank = rank  #! 这个是全局的排序
+        self.local_size = local_size
+        # * 修改底层实现，这种方式有点笨拙
+        if self.multi_process_mode:
+            _log = self.logger._log
+
+            def new_log(level: int, msg: object, args, exc_info=None, extra=None, stack_info: bool = False, stacklevel: int = 1):
+                _log(level, msg, args, exc_info, extra, stack_info, stacklevel)
+
+            if rank != 0:
+                self.logger._log = new_log
+        pass
+
     def check(self):
         print("logging 示范")
         self.logger.debug("This is a customer debug message")
@@ -71,6 +99,8 @@ class X_Logging:
         self.logger.warning("This is a customer warning message")
         self.logger.error("This is an customer error message")
         self.logger.critical("This is a customer critical message")
+        if self.multi_process_mode:
+            print(f"启动了多进程模式")
 
     def add_file_logger(self, dir_log, file_log_level=default_file_log_level, fileError_log_level=default_fileError_log_level):
         self.path = Path(dir_log).resolve().absolute()
@@ -120,6 +150,10 @@ def build_logging(
     dir_log=None,
     **kwargs,
 ) -> X_Logging:
+    """
+    Args:
+        kwargs 参考 `class:X_Logging` 的传参
+    """
     if logname not in __dict_logging:
         __dict_logging[logname] = X_Logging(
             logname=logname,
