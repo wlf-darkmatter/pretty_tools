@@ -82,14 +82,15 @@ class X_Logging:
         self.rank = rank  #! 这个是全局的排序
         self.local_size = local_size
         # * 修改底层实现，这种方式有点笨拙
-        if self.multi_process_mode:
-            _log = self.logger._log
+        self.multi_process_mode = True
+        _log = self.logger._log
 
-            def new_log(level: int, msg: object, args, exc_info=None, extra=None, stack_info: bool = False, stacklevel: int = 1):
+        def new_log(self, level: int, msg: object, args, exc_info=None, extra=None, stack_info: bool = False, stacklevel: int = 1):
+            if rank == 0:
                 _log(level, msg, args, exc_info, extra, stack_info, stacklevel)
 
-            if rank != 0:
-                self.logger._log = new_log
+        self.logger._log = new_log.__get__(self.logger, self.logger.__class__)
+
         pass
 
     def check(self):
