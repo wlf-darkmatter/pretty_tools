@@ -6,7 +6,7 @@ from datetime import datetime
 from pathlib import Path
 
 import click
-import colorlog
+from logging import Logger
 from rich.logging import RichHandler
 
 __dict_logging = {}
@@ -50,7 +50,7 @@ class X_Logging:
             multi_process_mode (bool, optional): 是否多进程模式，如果是多进程模式，会通过，且仅会通过一个全局变量来判断当前进程的排序，默认使用最先启动的进程来打印，避免重复打印. Defaults to False.
 
         """
-        self.logger = logging.getLogger(logname)
+        self.logger: Logger = logging.getLogger(logname)
         self.multi_process_mode = multi_process_mode
         setattr(self.logger, "x_logging", self)
 
@@ -85,13 +85,14 @@ class X_Logging:
         self.multi_process_mode = True
         _log = self.logger._log
 
-        def new_log(self, level: int, msg: object, args, exc_info=None, extra=None, stack_info: bool = False, stacklevel: int = 1):
-            if rank == 0:
+        def new_log(self: Logger, level: int, msg: object, args, exc_info=None, extra=None, stack_info: bool = False, stacklevel: int = 1, **kwargs):
+            #! 如果rank 不是 0，则不打印，除非设置了 force 为 True
+            force = kwargs.pop("force", False)
+            if force or rank == 0:
                 _log(level, msg, args, exc_info, extra, stack_info, stacklevel)
 
+        # * 替换原方法
         self.logger._log = new_log.__get__(self.logger, self.logger.__class__)
-
-        pass
 
     def check(self):
         print("logging 示范")
