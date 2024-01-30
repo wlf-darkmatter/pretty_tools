@@ -65,7 +65,7 @@ class X_Progress(Generic[T]):
         total (int, optional): 迭代器总长度. Defaults to None.
             如果 :code:`generator` 不传入，则用 :code:`total` 设置总长度,
             如果传入了 :code:`generator`，则自动使用 :code:`len(generator)` 作为总长度。
-        auto_refresh (bool, optional): 执行完毕后是否自动隐藏. Defaults to True.
+        auto_hide (bool, optional): 执行完毕后是否自动隐藏. Defaults to True.
 
     .. note::
 
@@ -131,7 +131,7 @@ class X_Progress(Generic[T]):
     )
     _echo_plus.init_plus()
 
-    def __init__(self, generator: Optional[Iterable[T]] = None, title="x_progress", total: Optional[int] = None, auto_hide=False) -> None:
+    def __init__(self, generator: Optional[Iterable[T]] = None, title="x_progress", total: Optional[int] = None, auto_hide=False, visible=True) -> None:
         self.task_id = None
         self.task = None
         self.title = title
@@ -139,6 +139,7 @@ class X_Progress(Generic[T]):
         self.auto_hide = auto_hide
         self.parent = None
         self.dict_child = {}
+        self.visible = visible
         if generator is not None:
             self.generator = generator
             if total is None and hasattr(generator, "__len__"):
@@ -146,7 +147,7 @@ class X_Progress(Generic[T]):
         # * 没有 len 的话，且无法计算获取 len 的话，则不显示进度，只显示速度
 
     @classmethod
-    def __start(cls):
+    def start(cls):
         if cls._echo_plus.finished:
             live = init_live()
             cls._echo_plus.live = live  # * 这里第一次运行的时候很可能是自己的live分配给自己
@@ -180,20 +181,20 @@ class X_Progress(Generic[T]):
         return list_unfinished
 
     @staticmethod
-    def sub_progress(generator: Optional[Iterable[TT]] = None, title="x_progress", total: Optional[int] = None, *args, **kwargs) -> Iterable[TT]:
+    def sub_progress(generator: Optional[Iterable[TT]] = None, title="x_progress", total: Optional[int] = None, visible=True, *args, **kwargs) -> Iterable[TT]:
         """
         返回一个会自动隐藏的子进度条
         """
         kwargs["auto_hide"] = True
-        return X_Progress(generator, title, total, *args, **kwargs)
+        return X_Progress(generator, title, total, *args, visible=visible, **kwargs)
 
-    def sub(self, generator: Optional[Iterable[TT]] = None, title="x_progress", total: Optional[int] = None, *args, **kwargs) -> Iterable[TT]:
+    def sub(self, generator: Optional[Iterable[TT]] = None, title="x_progress", total: Optional[int] = None, visible=True, *args, **kwargs) -> Iterable[TT]:
         """
         using with `with`
         返回一个会自动隐藏的子进度条
         """
         kwargs["auto_hide"] = True
-        sub_progress = X_Progress(generator, title, total, *args, **kwargs)
+        sub_progress = X_Progress(generator, title, total, *args, visible=visible, **kwargs)
         sub_progress.parent = self
         self.dict_child[sub_progress.task_id] = sub_progress
         return sub_progress
@@ -227,10 +228,11 @@ class X_Progress(Generic[T]):
                 self._echo_plus.remove_task(self.task_id)
 
         #! 只有这里能启动 进度条
-        self.__start()
+        self.start()
 
         self.task_id = self._echo_plus.add_task(self.title, total=self.total)
         self.task = self._echo_plus.tasks[self._echo_plus.task_ids.index(self.task_id)]
+        self.task.visible = self.visible
 
         for i in self.generator:
             yield i
@@ -262,7 +264,7 @@ class X_Progress(Generic[T]):
         #! 注意 with 启动的回显器不应当拥有一个可迭代对象的输入
         assert self.task is None
         # * 这时候初始化一个task
-        self.__start()
+        self.start()
         self.task_id = self._echo_plus.add_task(self.title, total=self.total)
         self.task = self._echo_plus.tasks[self._echo_plus.task_ids.index(self.task_id)]
         return self
