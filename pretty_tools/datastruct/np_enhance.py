@@ -1,22 +1,17 @@
 from __future__ import annotations
 
-from typing import Any, Generic, Iterable, Optional, Sequence, Tuple, TypeAlias, TypeVar, Union
+from typing import (Any, Generic, Iterable, Optional, Sequence, Tuple,
+                    TypeAlias, TypeVar, Union)
 
 import numpy as np
 from numpy._typing import NDArray
 from scipy import sparse
 
-from ._C_np_enhance import (
-    cy_bisect_left,
-    cy_bisect_left_array,
-    cy_bisect_right,
-    cy_bisect_right_array,
-    cy_cum_to_index,
-    cy_onehot_by_cumulate,
-    cy_onehot_by_index,
-    index_value_2d_,
-    index_value_2d_nonzero,
-)
+from ._C_np_enhance import (cy_bisect_left, cy_bisect_left_array,
+                            cy_bisect_right, cy_bisect_right_array,
+                            cy_cum_to_index, cy_onehot_by_cumulate,
+                            cy_onehot_by_index, index_value_2d_,
+                            index_value_2d_nonzero)
 from .cython_bbox import cy_bbox_overlaps_area, cy_bbox_overlaps_iou
 
 T_arrayType = TypeVar("T_arrayType", np.ndarray, sparse.spmatrix)
@@ -74,7 +69,8 @@ def convert_to_numpy(input_array, sparse_shape: Optional[Union[tuple, list]] = N
 
             if isinstance(input_array, torch.Tensor):
                 if input_array.is_sparse:
-                    from pretty_tools.datastruct.torch_enhance import Utils_Sparse as torch_utils_sparse
+                    from pretty_tools.datastruct.torch_enhance import \
+                        Utils_Sparse as torch_utils_sparse
 
                     return torch_utils_sparse.torch_sparse_to_scipy_sparse(input_array, shape=sparse_shape)
                 else:

@@ -1,23 +1,22 @@
-from .core import DecodeMethod_noCuda, DecodeMethod_noFFmpeg, DecodeMethod_useCuda, DecodeMethod_useFFmpeg
-from pathlib import Path
-from .core import log_video_batch, Backend_Decode_Base, Backend_Encode_Base
-import numpy as np
-from enum import Enum
+import queue
 import threading
+from enum import Enum
+from pathlib import Path
+from threading import Event
 
+import cv2
+import numpy as np
+import pycuda.driver as cuda
 # * https://www.leiphone.com/category/yanxishe/AUA3C3QTP1lJeBnm.html#
 import PyNvCodec as nvc
-from threading import Event
-from .core import num_gpus, Base_VideoConverter
-import queue
-
-from pretty_tools.multi_works import BoundThreadPoolExecutor
-from pretty_tools import X_Progress
-import cv2
-
 import torchvision.transforms as transforms
+from pretty_tools import X_Progress
+from pretty_tools.multi_works import BoundThreadPoolExecutor
 
-import pycuda.driver as cuda
+from .core import (Backend_Decode_Base, Backend_Encode_Base,
+                   Base_VideoConverter, DecodeMethod_noCuda,
+                   DecodeMethod_noFFmpeg, DecodeMethod_useCuda,
+                   DecodeMethod_useFFmpeg, log_video_batch, num_gpus)
 
 # Initialize CUDA context in main thread
 cuda.init()  # type: ignore
@@ -302,8 +301,8 @@ def tensor_to_surface(img_tensor, gpu_id: int = -1, handle=(None, None)) -> nvc.
     """
     Converts cuda float tensor to planar rgb surface.
     """
-    import torch
     import PytorchNvCodec as pnvc
+    import torch
 
     if len(img_tensor.shape) != 3 and img_tensor.shape[0] != 3:
         raise RuntimeError("Shape of the tensor must be (3, height, width)")

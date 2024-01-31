@@ -1,6 +1,7 @@
+from typing import Optional, Tuple, Union
+
 import numpy as np
 from scipy import sparse
-from typing import Optional, Tuple, Union
 
 
 def match_result_check(edge_index_gt: np.ndarray, edge_index_pred: np.ndarray):

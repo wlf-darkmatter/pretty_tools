@@ -1,12 +1,13 @@
 from __future__ import annotations
+
 import logging
 import logging.handlers
 import os
 from datetime import datetime
+from logging import Logger
 from pathlib import Path
 
 import click
-from logging import Logger
 from rich.logging import RichHandler
 
 __dict_logging = {}

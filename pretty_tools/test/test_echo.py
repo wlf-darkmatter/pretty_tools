@@ -1,5 +1,6 @@
-from pretty_tools.echo.x_progress import X_Progress
 import time
+
+from pretty_tools.echo.x_progress import X_Progress
 
 
 class Test_R_Progress:

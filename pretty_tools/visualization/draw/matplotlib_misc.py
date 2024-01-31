@@ -2,16 +2,14 @@
 这里存放了一些常用的调用函数，专门提供给 matplotlib 使用
 """
 import random
-from matplotlib.patches import ConnectionPatch
-from typing import Literal, Optional, Iterable
-import random
 from copy import deepcopy
-import numpy as np
+from typing import Iterable, Literal, Optional
+
 import matplotlib.patheffects as path_effects
-
 import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib.patches import ConnectionPatch
 from matplotlib.transforms import Affine2D, offset_copy
-
 
 Type_Connect = Literal["unique", "TP", "FP", "FN"]
 

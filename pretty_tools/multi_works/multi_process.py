@@ -4,7 +4,7 @@ import sys
 import time
 import traceback
 from concurrent.futures import ProcessPoolExecutor
-from multiprocessing import Pool, Process, cpu_count, Lock
+from multiprocessing import Lock, Pool, Process, cpu_count
 from types import TracebackType
 from typing import Any
 

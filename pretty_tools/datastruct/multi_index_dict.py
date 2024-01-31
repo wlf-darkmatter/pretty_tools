@@ -3,10 +3,12 @@ Multi Index Dict
 """
 from __future__ import annotations
 
-from typing import Any, Callable, Generic, Hashable, Iterable, Iterator, List, Sequence, Tuple, TypeVar, Optional, Union
-from scipy import sparse
+from typing import (Any, Callable, Generic, Hashable, Iterable, Iterator, List,
+                    Optional, Sequence, Tuple, TypeVar, Union)
+
 import numpy as np
 from pandas import DataFrame
+from scipy import sparse
 
 KT = TypeVar("KT")
 VT = TypeVar("VT")

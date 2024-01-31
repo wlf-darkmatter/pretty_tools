@@ -91,23 +91,15 @@ r"""
 import warnings
 from copy import deepcopy
 from functools import lru_cache
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
-from typing import Generic, TypeVar
+from typing import Any, Callable, Dict, Generic, List, Optional, Sequence, Tuple, TypeVar, Union
+
 import numpy as np
 import scipy.sparse as sci_sparse
 import torch
 import torch_geometric as pyg
 import torch_geometric.utils as pyg_utils
 import torch_sparse
-from scipy.sparse import (
-    bsr_matrix,
-    coo_matrix,
-    csc_array,
-    csr_array,
-    lil_array,
-    sparray,
-    spmatrix,
-)
+from scipy.sparse import bsr_matrix, coo_matrix, csc_array, csr_array, lil_array, sparray, spmatrix
 from torch import Tensor
 from torch_geometric.data import Batch, Data
 from torch_geometric.data.collate import collate

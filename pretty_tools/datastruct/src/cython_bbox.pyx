@@ -13,10 +13,14 @@
 
 
 # Numpy中的 ” float64″ 类型对应 Cython中 的 ”double” 类型，”int32″ 类型对应 ”int”类型。
+
 cimport cython
+
 import numpy as np
+
 cimport numpy as cnp
 from cpython cimport bool
+
 
 def cy_bbox_overlaps_iou(
     cnp.ndarray[cnp.float_t, ndim=2] boxes,

@@ -1,10 +1,12 @@
 """
 统计匹配的精度
 """
-from typing import LiteralString, Literal, List, Union, Tuple, Optional, Callable, Generic, TypeVar
+from typing import (Callable, Generic, List, Literal, LiteralString, Optional,
+                    Tuple, TypeVar, Union)
+
 import numpy as np
-from scipy import sparse
 import rich
+from scipy import sparse
 
 Type_Match_Metrics = Literal["Precision", "Recall", "F1", "TP", "FP", "FN"]
 T_M = TypeVar("T_M", bound=Type_Match_Metrics)  #! 这里用一个 bound 就可以根据 bound 的类型推断出 T_M 的类型了，也就是类似 pandas 的那种列名称提示

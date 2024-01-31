@@ -4,10 +4,11 @@
 在Streamlit内部，每次保存时都会从头到尾完整运行整个Python脚本。 Streamlit内部进行了大量处理来确保应用更新的效率。
 """
 
-import streamlit as st
-from pathlib import Path
-from PIL import Image
 import os
+from pathlib import Path
+
+import streamlit as st
+from PIL import Image
 
 st.title("MTMCT Visualization")
 

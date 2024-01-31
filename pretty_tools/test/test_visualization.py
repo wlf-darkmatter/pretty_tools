@@ -1,11 +1,11 @@
 import os
 from pathlib import Path
+from typing import Any, Dict, List, Tuple
 
 import numpy as np
 import pytest
 from PIL import Image
 from pretty_tools.datastruct import mdict
-from typing import Tuple, List, Dict, Any
 from pretty_tools.visualization import Pretty_Draw, Visiual_Tools
 
 # fmt: off
@@ -75,8 +75,9 @@ def quick_save(images: "List[Image.Image | np.ndarray] | Image.Image | np.ndarra
 
 class Test_Draw:
     def setup_method(self):
+        from pretty_tools.datastruct import (TrackCameraGraph,
+                                             TrackCameraInstances)
         from pretty_tools.datastruct.track_graph import TrackCameraGraph
-        from pretty_tools.datastruct import TrackCameraGraph, TrackCameraInstances
 
         self.tg0 = TrackCameraGraph.load(path_graph_0)
         self.tg1 = TrackCameraGraph.load(path_graph_1)

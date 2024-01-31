@@ -1,8 +1,8 @@
-from setuptools import find_packages, setup
-from setuptools import Extension
 import os
 from distutils.command.build import build as _build
+
 import numpy as np
+from setuptools import Extension, find_packages, setup
 
 if os.name == "nt":
     compile_args = {"gcc": ["/Qstd=c99"]}

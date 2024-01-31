@@ -1,22 +1,14 @@
+from copy import deepcopy
 from pathlib import Path
 
 import numpy as np
 import pytest
 import torch
-from pretty_tools.datastruct import mdict
 from pretty_tools import PATH_PRETTY
 from pretty_tools.datastruct import bbox_convert_np as np_converter
-from copy import deepcopy
-from pretty_tools.test.core import (
-    np_Max_error,
-    error_fp128,
-    error_fp64,
-    error_fp32,
-    error_fp16,
-    error_fp8,
-)
-
-from pretty_tools.datastruct import cython_bbox
+from pretty_tools.datastruct import cython_bbox, mdict
+from pretty_tools.test.core import (error_fp8, error_fp16, error_fp32,
+                                    error_fp64, error_fp128, np_Max_error)
 
 test_ltrb = np.array(
     [
@@ -67,7 +59,12 @@ class Test_Bbox_Convert:
 
         """
 
-        from pretty_tools.datastruct.bbox_convert_np import ltrb_to_ltwh, ltrb_to_xywh, ltwh_to_ltrb, ltwh_to_xywh, xywh_to_ltrb, xywh_to_ltwh
+        from pretty_tools.datastruct.bbox_convert_np import (ltrb_to_ltwh,
+                                                             ltrb_to_xywh,
+                                                             ltwh_to_ltrb,
+                                                             ltwh_to_xywh,
+                                                             xywh_to_ltrb,
+                                                             xywh_to_ltwh)
 
         check = np_Max_error
         #! 估计误差的时候，由于计算的时候存在一次加减运算，最后又要和一个存在误差的真值做差，因此误差累计是3倍
@@ -102,7 +99,12 @@ class Test_Bbox_Convert:
 
 
         """
-        from pretty_tools.datastruct.bbox_convert_np import ltrb_to_ltwh, ltrb_to_xywh, ltwh_to_ltrb, ltwh_to_xywh, xywh_to_ltrb, xywh_to_ltwh
+        from pretty_tools.datastruct.bbox_convert_np import (ltrb_to_ltwh,
+                                                             ltrb_to_xywh,
+                                                             ltwh_to_ltrb,
+                                                             ltwh_to_xywh,
+                                                             xywh_to_ltrb,
+                                                             xywh_to_ltwh)
 
         check = np_Max_error
 
@@ -264,7 +266,8 @@ class Test_MDICT:
 
 class Test_Numpy_Enhance:
     def test_bisect(self):
-        from pretty_tools.datastruct.np_enhance import bisect_left, bisect_right
+        from pretty_tools.datastruct.np_enhance import (bisect_left,
+                                                        bisect_right)
 
         ptr = np.array([0, 9, 15, 20])
         # ---------------------------- bisect_left ----------------------------
@@ -693,8 +696,8 @@ class Test_GeneralAnn:
 
     def test_init_with_image(self):
         pass
-        from pretty_tools.datastruct import GeneralAnn
         from PIL import Image
+        from pretty_tools.datastruct import GeneralAnn
 
         image = Image.open(PATH_PRETTY.joinpath("resources/imgs/Circle_View1_000001.jpg"))
         bboxes = GeneralAnn(ori_ann=test_ann, str_format="xywh", ori_img=image)
@@ -812,11 +815,8 @@ class Test_TrackGraph:
         """
         测试两个类型的数据是否可以相互转换
         """
-        from pretty_tools.datastruct import (
-            GeneralAnn,
-            TrackCameraGraph,
-            TrackCameraInstances,
-        )
+        from pretty_tools.datastruct import (GeneralAnn, TrackCameraGraph,
+                                             TrackCameraInstances)
 
         test_generalann = GeneralAnn(test_ltrb, str_format="ltrb")
 
@@ -834,12 +834,9 @@ class Test_TrackGraph:
         """
         测试两个类型的数据是否可以相互转换
         """
-        from pretty_tools.datastruct import (
-            GeneralAnn,
-            TrackCameraGraph,
-            TrackCameraInstances,
-        )
         from PIL import Image
+        from pretty_tools.datastruct import (GeneralAnn, TrackCameraGraph,
+                                             TrackCameraInstances)
 
         image = Image.open(PATH_PRETTY.joinpath("resources/imgs/Circle_View1_000001.jpg"))
         test_generalann = GeneralAnn(test_ltrb, str_format="ltrb", ori_img=image)
@@ -862,11 +859,8 @@ class Test_TrackGraph:
 
     def test_save_and_load(self):
         # * 即时保存
-        from pretty_tools.datastruct import (
-            GeneralAnn,
-            TrackCameraGraph,
-            TrackCameraInstances,
-        )
+        from pretty_tools.datastruct import (GeneralAnn, TrackCameraGraph,
+                                             TrackCameraInstances)
 
         test_trackgraph = TrackCameraGraph(
             ori_ann=test_ltrb,
@@ -887,8 +881,8 @@ class Test_TrackGraph:
 
 class Test_Graph_Enhance:
     def setup_method(self):
-        from pretty_tools.resources import PATH_RESOURCES_DATA
         from pretty_tools.datastruct.graph_enhance import CohereGraph
+        from pretty_tools.resources import PATH_RESOURCES_DATA
 
         self.x = np.loadtxt(PATH_RESOURCES_DATA.joinpath("test_feat_20x2048.txt"), delimiter=",")
         self.list_len = [4, 6, 10]

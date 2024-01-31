@@ -10,7 +10,10 @@ import torch
 
 from .backend_deffcode import Backend_Decode_Deffcode
 from .backend_vpf import Backend_Decode_VPF
-from .core import Backend_Decode_Base, Backend_deffcode, Backend_opencv, Backend_vpf, DecodeMethod_noCuda, DecodeMethod_noFFmpeg, DecodeMethod_useCuda, DecodeMethod_useFFmpeg, log_video_batch
+from .core import (Backend_Decode_Base, Backend_deffcode, Backend_opencv,
+                   Backend_vpf, DecodeMethod_noCuda, DecodeMethod_noFFmpeg,
+                   DecodeMethod_useCuda, DecodeMethod_useFFmpeg,
+                   log_video_batch)
 
 parser = argparse.ArgumentParser(description="批量解码")
 parser.add_argument("--path_video_dir", type=str, default="/data/Datasets/AIC23_Track1/train/S002")

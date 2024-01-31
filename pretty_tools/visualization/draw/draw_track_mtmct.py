@@ -16,8 +16,8 @@ from matplotlib.offsetbox import AnnotationBbox, OffsetImage
 from matplotlib.patches import ConnectionPatch
 from pandas import DataFrame
 from PIL import Image, ImageDraw
-from pretty_tools.datastruct.multi_index_dict import mdict
 from pretty_tools.datastruct import np_ltrb_to_xywh
+from pretty_tools.datastruct.multi_index_dict import mdict
 
 from .draw_track import Visual_Track
 

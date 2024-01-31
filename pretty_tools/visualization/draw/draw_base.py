@@ -1,10 +1,11 @@
+import copy
+from functools import partial
+
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 
-from ..core import log_visualization
-import copy
 from ...resources import path_font_arial
-from functools import partial
+from ..core import log_visualization
 
 
 def draw_bboxes(img, bboxes_ltrb: np.ndarray, colors=None, infos=None, outline=2, size_font=24, mask: float = 0) -> Image.Image:

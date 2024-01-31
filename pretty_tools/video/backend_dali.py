@@ -1,14 +1,18 @@
-from ContionTrack.datasets.utils.dali_utils import build_video_pipeline, VideoLoader
-from pathlib import Path
+import logging
 import os
-from pretty_tools import X_Progress
+import queue
+from pathlib import Path
+
+import rich
 import torch
 import torchvision.transforms as transforms
+from pretty_tools import X_Progress
 from pretty_tools.multi_works import BoundThreadPoolExecutor
-import queue
-import rich
-import logging
-from .core import num_gpus, Base_VideoConverter
+
+from ContionTrack.datasets.utils.dali_utils import (VideoLoader,
+                                                    build_video_pipeline)
+
+from .core import Base_VideoConverter, num_gpus
 
 # todo 还没写好适配pretty_tools的接口，以后再改写
 

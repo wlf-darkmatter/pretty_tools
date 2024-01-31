@@ -5,9 +5,12 @@
 # Licensed under The MIT License [see LICENSE for details]
 # Written by Lingfeng Wang
 # --------------------------------------------------------
-cimport cython #! 这个不能少
+cimport cython  # ! 这个不能少
+
 import numpy as np
+
 cimport numpy as cnp
+
 # Cython不允许一个cdef定义的函数被外部python代码直接调用
 
 @cython.boundscheck(False)

@@ -1,11 +1,11 @@
 import multiprocessing as mp
-
 from multiprocessing import Event
 from pathlib import Path
 
-from .core import DecodeMethod_noCuda, DecodeMethod_noFFmpeg, DecodeMethod_useCuda, DecodeMethod_useFFmpeg
-from .core import log_video_batch, Backend_Decode_Base, dict_loglevel
 from ..echo.x_logging import X_Logging
+from .core import (Backend_Decode_Base, DecodeMethod_noCuda,
+                   DecodeMethod_noFFmpeg, DecodeMethod_useCuda,
+                   DecodeMethod_useFFmpeg, dict_loglevel, log_video_batch)
 
 #! Backend_Deffcode 对应的一种批量解码器，同时解码多个视频，并且同时输出这一批次视频的相同帧
 # * https://abhitronix.github.io/deffcode/v0.2.5-stable/

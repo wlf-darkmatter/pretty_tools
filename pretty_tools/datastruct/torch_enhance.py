@@ -1,12 +1,12 @@
 import copy
-from typing import List, Optional, Tuple, Union, Sequence
+from typing import List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import scipy as sp
 import torch
 import torch.nn.functional as F
-from torch import Tensor
 from scipy import sparse
+from torch import Tensor
 
 
 def index_to_mask(index: Tensor, size: Optional[int] = None) -> Tensor:

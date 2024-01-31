@@ -20,9 +20,10 @@ import copy
 import itertools
 import math
 import sys
+from copy import deepcopy
 from functools import partial
 from typing import Any, Dict, List, Literal, Optional, Sequence, Tuple, Union
-from copy import deepcopy
+
 import cv2
 import matplotlib
 import matplotlib.transforms as mtransforms
@@ -180,7 +181,8 @@ class Pretty_Draw:
 
 
         """
-        from matplotlib.offsetbox import AnnotationBbox, DrawingArea, OffsetImage, TextArea
+        from matplotlib.offsetbox import (AnnotationBbox, DrawingArea,
+                                          OffsetImage, TextArea)
 
         z_t = 0.8
         _d_z_t = (1 - z_t) / 2

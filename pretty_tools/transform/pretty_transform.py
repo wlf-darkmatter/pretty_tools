@@ -1,4 +1,5 @@
-from typing import List, Callable, Any, Tuple
+from typing import Any, Callable, List, Tuple
+
 import imgaug as ia
 from imgaug import augmenters as iaa
 
@@ -14,16 +15,18 @@ from imgaug import augmenters as iaa
 * Pytorch 格式的 torch.Tensor
 
 """
-from PIL import Image
-import numpy as np
-import cv2
 import random
+from typing import Tuple, Union
+
+import cv2
+import numpy as np
+import pandas as pd
 import torch
 import torchvision
 import torchvision.transforms.functional as F
-from ..datastruct import TrackCameraInstances, GeneralAnn
-import pandas as pd
-from typing import Tuple, Union
+from PIL import Image
+
+from ..datastruct import GeneralAnn, TrackCameraInstances
 
 
 class Base_Transform:

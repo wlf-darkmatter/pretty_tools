@@ -4,7 +4,6 @@
 import os
 from typing import Optional, Union
 
-
 from pretty_tools.echo.x_progress import X_Progress
 from rich.columns import Columns
 from rich.console import Group, RenderableType

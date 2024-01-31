@@ -2,7 +2,7 @@
 累加计时器
 """
 import time
-from typing import Callable, List, Tuple, Optional, Union
+from typing import Callable, List, Optional, Tuple, Union
 
 
 class Time_Recoder:

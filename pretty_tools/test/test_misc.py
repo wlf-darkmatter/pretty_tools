@@ -4,8 +4,9 @@ from pathlib import Path
 from typing import List, Tuple
 
 import numpy as np
-from pretty_tools.datastruct.misc import np_get_gt_match_from_id_0, py_get_gt_match_from_id
 import pytest
+from pretty_tools.datastruct.misc import (np_get_gt_match_from_id_0,
+                                          py_get_gt_match_from_id)
 
 
 class Test_get_match_gt:

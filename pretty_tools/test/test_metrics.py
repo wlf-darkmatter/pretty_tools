@@ -1,6 +1,6 @@
+import numpy as np
 import pytest
 from pretty_tools.metrics import MatchMetrics
-import numpy as np
 
 
 class Test_Match:

@@ -1,10 +1,15 @@
-from typing import Any, Callable, Generator, Generic, Iterable, Optional, TypeVar
+from typing import (Any, Callable, Generator, Generic, Iterable, Optional,
+                    TypeVar)
 
+from pretty_tools.echo.echo_column.pretty_column import (
+    Pretty_SpeedColumn_item, Pretty_Text_PercentageColumn,
+    Pretty_TotalAmountColumn)
 from rich import filesize
 from rich.console import Console, Group, RenderableType
-from rich.progress import BarColumn, Progress, ProgressColumn, SpinnerColumn, Task, TextColumn, TimeElapsedColumn, TimeRemainingColumn, track
+from rich.progress import (BarColumn, Progress, ProgressColumn, SpinnerColumn,
+                           Task, TextColumn, TimeElapsedColumn,
+                           TimeRemainingColumn, track)
 from rich.text import Text
-from pretty_tools.echo.echo_column.pretty_column import Pretty_SpeedColumn_item, Pretty_TotalAmountColumn, Pretty_Text_PercentageColumn
 
 T = TypeVar("T")
 TT = TypeVar("TT")

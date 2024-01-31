@@ -1,8 +1,9 @@
-import shapely
-from shapely.geometry import Polygon
+from typing import Optional, Union
+
 import numpy as np
-from typing import Union, Optional
+import shapely
 from pretty_tools.datastruct.cython_bbox import cy_bbox_overlaps_flag
+from shapely.geometry import Polygon
 
 
 def loop_union(a, b: Optional[Union[list, Polygon]] = None) -> Polygon:

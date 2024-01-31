@@ -1,9 +1,11 @@
+from typing import (Any, Generic, Iterable, Optional, Sequence, Tuple, TypeVar,
+                    Union)
+
 import numpy as np
-from typing import Any, Iterable, Optional, Sequence, Tuple, TypeVar, Union, Generic
-from scipy import sparse
-from matplotlib import pyplot as plt
 import seaborn as sns
+from matplotlib import pyplot as plt
 from pandas import DataFrame
+from scipy import sparse
 
 array_Type = Union[np.ndarray, sparse.spmatrix]
 
@@ -12,8 +14,8 @@ def quick_show_array(input_array: array_Type):
     """
     因为大型矩阵要查看值非常麻烦，这里直接提供一个快速可视化的调用
     """
-    from matplotlib import pyplot as plt
     import seaborn as sns
+    from matplotlib import pyplot as plt
 
     fig = plt.figure()
     if isinstance(input_array, sparse.spmatrix):
@@ -30,8 +32,8 @@ def quick_show_edgeindex(row, col):
     因为大型矩阵要查看值非常麻烦，这里直接提供一个快速可视化的调用,
     输入的是矩阵的row和col
     """
-    from matplotlib import pyplot as plt
     import seaborn as sns
+    from matplotlib import pyplot as plt
     from pandas import DataFrame
 
     fig = plt.figure()

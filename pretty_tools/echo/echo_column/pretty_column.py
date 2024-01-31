@@ -1,7 +1,11 @@
-from typing import Any, Callable, Generator, Generic, Iterable, Optional, TypeVar
+from typing import (Any, Callable, Generator, Generic, Iterable, Optional,
+                    TypeVar)
+
 from rich import filesize
 from rich.console import Console, Group, RenderableType
-from rich.progress import BarColumn, Progress, ProgressColumn, SpinnerColumn, Task, TextColumn, TimeElapsedColumn, TimeRemainingColumn, track
+from rich.progress import (BarColumn, Progress, ProgressColumn, SpinnerColumn,
+                           Task, TextColumn, TimeElapsedColumn,
+                           TimeRemainingColumn, track)
 from rich.text import Text
 
 
