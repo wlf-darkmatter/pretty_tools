@@ -10,6 +10,8 @@ from ..echo import Echo_Resource
 class BoundThreadPoolExecutor(ThreadPoolExecutor):
     """
     对ThreadPoolExecutor 进行重写，给队列设置边界，否则会存在大量的内存占用
+
+    通过 with 语句启动后，在退出时会自动等待，即内部设置了 :code:`self.shutdown(wait=True)`
     """
 
     def __init__(
