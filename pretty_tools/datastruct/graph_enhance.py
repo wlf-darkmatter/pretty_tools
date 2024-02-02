@@ -384,7 +384,7 @@ def get_block_pair(y_id: Tensor) -> Tensor:
 class Batch_Multi_Graph:
     """
     .. note::
-        **Stable** 模块，长期支持
+        **Stable** 模块，逐步吸收到 XBGraph 中
 
     多个 **单相机子图** 合并成一个 较大的图，成为 **多相机图**，
     但还要设计成一个可组合的形式，用树的形式可以更好地理解这个数据的结构
