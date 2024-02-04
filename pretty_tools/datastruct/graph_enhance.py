@@ -807,6 +807,17 @@ class Batch_Multi_Graph:
         """
 
         如果输入的类型是 ``torch.Tensor``，则返回的也是 ``torch.Tensor``
+
+        example:
+        .. code-block:: python
+            y = np.array([ 0,  1,  2,  3,  4,  5,  6,  7,  0,  2,  3,  4, 33,  0,  3,  4,  6, 10, 11, 12, 33])
+            len_graph = np.array([8, 5, 8])
+            edge_index_gt: np.ndarray = Batch_Multi_Graph.Batch_Block_gt_edge_index(y, [len_graph])
+
+            >>> np.array([[ 0,  0,  8,  2,  3,  3, 10,  4,  4, 11,  6, 12],
+                          [ 8, 13, 13,  9, 10, 14, 14, 11, 15, 15, 16, 20]])
+
+
         """
         if isinstance(y, torch.Tensor):
             _y = y.detach().cpu().numpy()
