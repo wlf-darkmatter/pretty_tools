@@ -90,7 +90,7 @@ class X_Logging:
             #! 如果rank 不是 0，则不打印，除非设置了 force 为 True
             force = kwargs.pop("force", False)
             if force or rank == 0:
-                _log(level, msg, args, exc_info, extra, stack_info, stacklevel)
+                _log(level, msg, args, exc_info, extra, stack_info, stacklevel)  # todo 在日志文件中，打印的代码位置会一直显示这里的行号，20240204发现
 
         # * 替换原方法
         self.logger._log = new_log.__get__(self.logger, self.logger.__class__)
