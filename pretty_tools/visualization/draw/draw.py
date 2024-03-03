@@ -16,6 +16,7 @@
     建议通过判端 ``type(data) == "<class 'torch.Tensor'>"`` 来判端是否是 :class:`torch` 类型的数据，并通过调用 :func:`numpy()` 将其转换成 numpy 类型。
 
 """
+
 import copy
 import itertools
 import math
@@ -181,8 +182,7 @@ class Pretty_Draw:
 
 
         """
-        from matplotlib.offsetbox import (AnnotationBbox, DrawingArea,
-                                          OffsetImage, TextArea)
+        from matplotlib.offsetbox import AnnotationBbox, DrawingArea, OffsetImage, TextArea
 
         z_t = 0.8
         _d_z_t = (1 - z_t) / 2
@@ -656,7 +656,9 @@ class Pretty_Draw:
             infos = [f"tidx:{i}" for i in list_tidx]
             ids = [dict_tidx_ctid[i] for i in list_tidx] if dict_tidx_ctid is not None else None
             ltrb = np.stack([dict_tidx_ltrb[i] for i in list_tidx])
-            vis_img = Pretty_Draw.draw_bboxes(img, ltrb, ids=ids, outline=int(scale * 3), size_font=int(scale * 24), infos=infos, mask=0.2)  # * 在锚框的右上角显示 tidx 号， tidx 号的顺序由 dict_data 中给出
+            vis_img = Pretty_Draw.draw_bboxes(
+                img, ltrb, ids=ids, outline=int(scale * 3), size_font=int(scale * 24), infos=infos, mask=0.2
+            )  # * 在锚框的右上角显示 tidx 号， tidx 号的顺序由 dict_data 中给出
             seq_img_with_bbox.append(vis_img)
 
         # %% # * matplotlib figure
@@ -1027,7 +1029,6 @@ class Pretty_Draw:
         fig.colorbar(cm.ScalarMappable(norm=norm, cmap=cmap), cax=c_ax)  # colorbar(ax=c_ax) 和  colorbar(cax=c_ax) 是有区别的，前者会绘制颜色条，但是左侧留空了
 
         return fig, np_ax
-        fig.savefig("tmp/tmp.jpg")
 
 
 def add_right_cax(ax, pad: int, width: int):

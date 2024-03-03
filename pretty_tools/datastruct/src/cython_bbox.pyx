@@ -11,8 +11,11 @@
 # --------------------------------------------------------
 # cython:language_level=3
 
+"""
+Numpy中的 ” float64″ 类型对应 Cython中 的 ”double” 类型，”int32″ 类型对应 ”int”类型。
 
-# Numpy中的 ” float64″ 类型对应 Cython中 的 ”double” 类型，”int32″ 类型对应 ”int”类型。
+"""
+
 
 cimport cython
 
@@ -34,6 +37,11 @@ def cy_bbox_overlaps_iou(
     Returns
     -------
     overlaps: (N, K) ndarray of overlap between boxes and query_boxes
+
+
+    .. note::
+        因为算法中对像素点的边界进行了+1 的操作，导致无法处理纯比例构成的 IoU 的占比大小。
+
     """
     cdef unsigned int N = boxes.shape[0] #type: ignore
     cdef unsigned int K = query_boxes.shape[0] #type: ignore
