@@ -7,8 +7,7 @@ import torch
 from pretty_tools import PATH_PRETTY
 from pretty_tools.datastruct import bbox_convert_np as np_converter
 from pretty_tools.datastruct import cython_bbox, mdict
-from pretty_tools.test.core import (error_fp8, error_fp16, error_fp32,
-                                    error_fp64, error_fp128, np_Max_error)
+from pretty_tools.test.core import error_fp8, error_fp16, error_fp32, error_fp64, error_fp128, np_Max_error
 
 test_ltrb = np.array(
     [
@@ -59,12 +58,7 @@ class Test_Bbox_Convert:
 
         """
 
-        from pretty_tools.datastruct.bbox_convert_np import (ltrb_to_ltwh,
-                                                             ltrb_to_xywh,
-                                                             ltwh_to_ltrb,
-                                                             ltwh_to_xywh,
-                                                             xywh_to_ltrb,
-                                                             xywh_to_ltwh)
+        from pretty_tools.datastruct.bbox_convert_np import ltrb_to_ltwh, ltrb_to_xywh, ltwh_to_ltrb, ltwh_to_xywh, xywh_to_ltrb, xywh_to_ltwh
 
         check = np_Max_error
         #! 估计误差的时候，由于计算的时候存在一次加减运算，最后又要和一个存在误差的真值做差，因此误差累计是3倍
@@ -99,12 +93,7 @@ class Test_Bbox_Convert:
 
 
         """
-        from pretty_tools.datastruct.bbox_convert_np import (ltrb_to_ltwh,
-                                                             ltrb_to_xywh,
-                                                             ltwh_to_ltrb,
-                                                             ltwh_to_xywh,
-                                                             xywh_to_ltrb,
-                                                             xywh_to_ltwh)
+        from pretty_tools.datastruct.bbox_convert_np import ltrb_to_ltwh, ltrb_to_xywh, ltwh_to_ltrb, ltwh_to_xywh, xywh_to_ltrb, xywh_to_ltwh
 
         check = np_Max_error
 
@@ -266,8 +255,7 @@ class Test_MDICT:
 
 class Test_Numpy_Enhance:
     def test_bisect(self):
-        from pretty_tools.datastruct.np_enhance import (bisect_left,
-                                                        bisect_right)
+        from pretty_tools.datastruct.np_enhance import bisect_left, bisect_right
 
         ptr = np.array([0, 9, 15, 20])
         # ---------------------------- bisect_left ----------------------------
@@ -514,8 +502,8 @@ class Test_Numpy_Enhance:
 
 class Test_Numpy_Bbox:
     def setup_method(self):
-        pass
-        self.np_bboxes = np.array(
+
+        self.bbox_a = np.array(
             [
                 [0, 0, 4, 5],
                 [2, 2, 8, 8],
@@ -523,13 +511,69 @@ class Test_Numpy_Bbox:
                 [10, 0, 15, 10],
                 [0, 0, 3, 7],
             ],
-            dtype=np.float64,
+            dtype=float,
         )
+        self.bbox_b = np.array(
+            [
+                [1, 1, 5, 6],
+                [3, 3, 10, 9],
+                [2, 3, 17, 10],
+                [11, 1, 16, 11],
+                [0, 1, 4, 7],
+            ],
+            dtype=float,
+        )
+        self.gt_union_area = np.array(
+            [
+                [28.0, 60.0, 121.0, 70.0, 28.0],
+                [44.0, 53.0, 111.0, 86.0, 50.0],
+                [57.0, 55.0, 112.0, 99.0, 63.0],
+                [70.0, 92.0, 120.0, 64.0, 74.0],
+                [31.0, 63.0, 122.0, 71.0, 27.0],
+            ],
+        )
+        llist = []
+        for a in self.bbox_a:
+            list_ab = []
+            for b in self.bbox_b:
+                l = min(a[0], b[0])
+                t = min(a[1], b[1])
+                r = max(a[2], b[2])
+                b = max(a[3], b[3])
+                list_ab.append((b - t) * (r - l))
+            llist.append(list_ab)
+        self.gt_C_area = np.array(llist)
+
+    def test_cython_union_area(self):
+        from pretty_tools.datastruct.cython_bbox import cy_bbox_union_area
+
+        result = cy_bbox_union_area(self.bbox_a, self.bbox_b)
+        assert (result == self.gt_union_area).all()
+
+    def test_cython_iou(self):
+        from pretty_tools.datastruct.cython_bbox import cy_bbox_overlaps_iou, cy_bbox_overlaps_area
+
+        result = cy_bbox_overlaps_iou(self.bbox_a, self.bbox_b)
+        I_area = cy_bbox_overlaps_area(self.bbox_a, self.bbox_b)
+
+        gt_result = I_area / self.gt_union_area
+        assert (gt_result == result).all()
+
+    def test_cython_giou(self):
+        from pretty_tools.datastruct.cython_bbox import cy_bbox_overlaps_giou, cy_bbox_overlaps_iou, cy_bbox_overlaps_area, cy_bbox_union_area
+
+        result_g = cy_bbox_overlaps_giou(self.bbox_a, self.bbox_b)
+
+        result_iou = cy_bbox_overlaps_iou(self.bbox_a, self.bbox_b)
+
+        result_gt = result_iou - (self.gt_C_area - self.gt_union_area) / self.gt_C_area
+
+        assert (result_g == result_gt).all()
 
     def test_iou_overlap_flag(self):
         from pretty_tools.datastruct.cython_bbox import cy_bbox_overlaps_flag
 
-        overlap_flag = cy_bbox_overlaps_flag(self.np_bboxes, self.np_bboxes)
+        overlap_flag = cy_bbox_overlaps_flag(self.bbox_a, self.bbox_a)
         gt = np.array(
             [
                 [True, True, True, False, True],
@@ -815,8 +859,7 @@ class Test_TrackGraph:
         """
         测试两个类型的数据是否可以相互转换
         """
-        from pretty_tools.datastruct import (GeneralAnn, TrackCameraGraph,
-                                             TrackCameraInstances)
+        from pretty_tools.datastruct import GeneralAnn, TrackCameraGraph, TrackCameraInstances
 
         test_generalann = GeneralAnn(test_ltrb, str_format="ltrb")
 
@@ -835,8 +878,7 @@ class Test_TrackGraph:
         测试两个类型的数据是否可以相互转换
         """
         from PIL import Image
-        from pretty_tools.datastruct import (GeneralAnn, TrackCameraGraph,
-                                             TrackCameraInstances)
+        from pretty_tools.datastruct import GeneralAnn, TrackCameraGraph, TrackCameraInstances
 
         image = Image.open(PATH_PRETTY.joinpath("resources/imgs/Circle_View1_000001.jpg"))
         test_generalann = GeneralAnn(test_ltrb, str_format="ltrb", ori_img=image)
@@ -859,8 +901,7 @@ class Test_TrackGraph:
 
     def test_save_and_load(self):
         # * 即时保存
-        from pretty_tools.datastruct import (GeneralAnn, TrackCameraGraph,
-                                             TrackCameraInstances)
+        from pretty_tools.datastruct import GeneralAnn, TrackCameraGraph, TrackCameraInstances
 
         test_trackgraph = TrackCameraGraph(
             ori_ann=test_ltrb,
