@@ -32,6 +32,7 @@ import numpy as np
 import seaborn as sns
 from matplotlib import font_manager as fm
 from matplotlib import pyplot as plt
+from matplotlib.pyplot import Figure
 from matplotlib.axes import Axes
 from matplotlib.gridspec import GridSpec
 from matplotlib.offsetbox import AnnotationBbox, OffsetImage
@@ -941,7 +942,7 @@ class Pretty_Draw:
         annot=False,
         square=False,
         cmap=None,
-    ):
+    ) -> tuple[Figure, np.ndarray]:
         """
         同时绘制多个热图 (基于 seaborn)。并且共享同一个颜色轴，通过调用 ``GridSpec`` 解决了共享颜色轴时创建新轴进而影响了其他轴显示效果的问题
 
