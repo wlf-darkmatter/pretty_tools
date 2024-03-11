@@ -183,6 +183,8 @@ def torch_quick_visual_2d(data: Tensor, path_save=None):
 
 class distance_tools:
     """
+    distance_tools
+
     .. note::
         **Stable** 模块，长期支持
 
@@ -194,13 +196,17 @@ class distance_tools:
         - 闵可夫斯基距离: `minkowski`
         - 欧氏距离: `euclidean`
 
+    .. note::
+
+        移植到 ContionTrack.utils.misc 中
+        在 **ContionTrack.utils.misc** 中，提供了一些常用的计算相似度的方法，存在于 :class:`ContionTrack.utils.misc` 中
 
     """
 
     @staticmethod
     def calc_embedding_distance(data_a: Tensor, data_b: Tensor, metric="cosine", *args, **kwargs) -> Tensor:
         """
-        输入两组特征向量，计算特征距离矩阵
+        输入两组特征向量，计算特征距离矩阵 (移植到 ContionTrack.utils.misc 中)
 
         Args:
             data_a (torch.Tensor): :math:`(n, d)` 向量
@@ -213,7 +219,7 @@ class distance_tools:
         assert data_a.ndim == 2 and data_b.ndim == 2, "输入的数据必须是二维的"
         assert data_a.shape[1] == data_b.shape[1], "输入的深度必须是一致"
         dist_matrix = torch.zeros((len(data_a), len(data_b)), dtype=torch.float)
-        if dist_matrix.size == 0:
+        if len(data_a) == 0 or len(data_b) == 0:
             return dist_matrix
         if metric == "minkowski":
             dist_matrix = torch.cdist(data_a, data_b, *args, **kwargs)
@@ -230,7 +236,7 @@ class distance_tools:
     @staticmethod
     def calc_embedding_similarity(data_a: Tensor, data_b: Tensor, metric="cosine", *args, **kwargs) -> Tensor:
         """
-        输入两组特征向量，计算特征相似度矩阵
+        输入两组特征向量，计算特征相似度矩阵 (移植到 ContionTrack.utils.misc 中)
 
         Args:
             data_a (torch.Tensor): :math:`(n, d)` 向量
