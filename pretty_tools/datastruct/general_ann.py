@@ -7,7 +7,7 @@ from typing import Dict, List, Optional, Sequence, Tuple, Union
 import numpy as np
 from pandas import DataFrame
 from PIL import Image
-from pretty_tools.datastruct import bbox_convert_np as np_converter
+from pretty_tools.datastruct import bbox_convert as np_converter
 
 track_column = ["frame", "id", "xc", "yc", "w", "h", "prob", "cls", "vis", "crowd"]
 track_column_dtype = [int, int, np.float64, np.float64, np.float64, np.float64, np.float64, int, int, int]

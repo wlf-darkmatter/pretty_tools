@@ -40,7 +40,7 @@ from matplotlib.patches import ConnectionPatch
 from pandas import DataFrame
 from PIL import Image, ImageDraw, ImageFont
 from pretty_tools.datastruct import graph_enhance, np_enhance
-from pretty_tools.datastruct.bbox_convert_np import dict_convert_fn
+from pretty_tools.datastruct.bbox_convert import dict_convert_fn
 from pretty_tools.datastruct.cython_bbox import cy_bbox_overlaps_iou
 from pretty_tools.datastruct.multi_index_dict import mdict
 from pretty_tools.datastruct.np_enhance import convert_to_numpy
