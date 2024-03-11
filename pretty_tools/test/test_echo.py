@@ -140,9 +140,9 @@ class Test_Runtime_info:
 
         for _ in range(100):
             for label, last_label in zip(the_order, last_order):
-                time.sleep(0.01)
+                time.sleep(0.0001)
                 timer.record(label, last_label=last_label, verbose=True)
-            time.sleep(1)
+            time.sleep(0.0003)
 
     pass
 
