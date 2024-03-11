@@ -1,86 +1,99 @@
-from typing import Any, Callable, Dict, List, Literal, Tuple, Union
+"""
 
+默认不加载Torch，以提高运行效率
+但是支持转换 torch.Tensor 的数据
+
+"""
+
+from typing import Any, Callable, Dict, List, Literal, Tuple, Union, TypeVar
+from copy import deepcopy
 import numpy as np
 
 Item_Bbox = Literal["ltrb", "ltwh", "xywh"]
 
+T = TypeVar("T")
 
-def ltrb_to_ltwh(ltrb):
-    ltwh = np.array(ltrb)
-    ndim1 = ltwh.ndim == 1
-    if ndim1 == 1:
-        ltwh = np.array([ltwh])
-    ltwh[:, 2] -= ltwh[:, 0]
-    ltwh[:, 3] -= ltwh[:, 1]
+
+def __quick_convert(bbox: T, inplace: bool) -> tuple[bool, T]:
+    assert hasattr(bbox, "shape"), "输入的参数必须是 torch.Tensor 或者 numpy.ndarray"
+    if not inplace:
+        bbox = deepcopy(bbox)
+    if len(bbox.shape) == 2:
+        return False, bbox
+    else:
+        if bbox.__class__.__name__ == "Tensor":
+            bbox = bbox.unsqueeze(0)
+        elif bbox.__class__.__name__ == "ndarray":
+            bbox = np.array([bbox])
+        else:
+            raise TypeError("输入的参数必须是 torch.Tensor 或者 numpy.ndarray")
+        return True, bbox
+
+
+def ltrb_to_ltwh(ltrb: T, inplace=False) -> T:
+    ndim1, ltwh = __quick_convert(ltrb, inplace)
+
+    ltwh[:, 2] = ltwh[:, 2] - ltwh[:, 0]
+    ltwh[:, 3] = ltwh[:, 3] - ltwh[:, 1]
     if ndim1:
         return ltwh[0]
     return ltwh
 
 
-def ltwh_to_ltrb(ltwh):
-    ltrb = np.array(ltwh)
-    ndim1 = ltrb.ndim == 1
-    if ndim1 == 1:
-        ltrb = np.array([ltrb])
-    ltrb[:, 2] += ltrb[:, 0]
-    ltrb[:, 3] += ltrb[:, 1]
+def ltwh_to_ltrb(ltwh: T, inplace=False) -> T:
+    ndim1, ltrb = __quick_convert(ltwh, inplace)
+
+    ltrb[:, 2] = ltrb[:, 2] + ltrb[:, 0]
+    ltrb[:, 3] = ltrb[:, 3] + ltrb[:, 1]
     if ndim1:
         return ltrb[0]
     return ltrb
 
 
-def ltwh_to_xywh(ltwh):
+def ltwh_to_xywh(ltwh: T, inplace=False) -> T:
     """
     左上宽高 转 中心宽高
     """
-    xywh = np.array(ltwh)
-    ndim1 = xywh.ndim == 1
-    if ndim1 == 1:
-        xywh = np.array([xywh])
-    xywh[:, 0] += xywh[:, 2] / 2.0
-    xywh[:, 1] += xywh[:, 3] / 2.0
+    ndim1, xywh = __quick_convert(ltwh, inplace)
+
+    xywh[:, 0] = xywh[:, 0] + xywh[:, 2] / 2.0
+    xywh[:, 1] = xywh[:, 1] + xywh[:, 3] / 2.0
     if ndim1:
         return xywh[0]
     return xywh
 
 
-def xywh_to_ltwh(xywh):
+def xywh_to_ltwh(xywh: T, inplace=False) -> T:
     """ """
-    ltwh = np.array(xywh)
-    ndim1 = ltwh.ndim == 1
-    if ndim1 == 1:
-        ltwh = np.array([ltwh])
-    ltwh[:, 0] -= ltwh[:, 2] / 2.0  # L
-    ltwh[:, 1] -= ltwh[:, 3] / 2.0  # T
+    ndim1, ltwh = __quick_convert(xywh, inplace)
+
+    ltwh[:, 0] = ltwh[:, 0] - ltwh[:, 2] / 2.0  # L
+    ltwh[:, 1] = ltwh[:, 1] - ltwh[:, 3] / 2.0  # T
     if ndim1:
         return ltwh[0]
     return ltwh
 
 
-def xywh_to_ltrb(xywh):
+def xywh_to_ltrb(xywh: T, inplace=False) -> T:
     """ """
-    ltrb = np.array(xywh)
-    ndim1 = ltrb.ndim == 1
-    if ndim1:
-        ltrb = np.array([ltrb])
-    ltrb[:, 0] -= ltrb[:, 2] / 2.0  # L
-    ltrb[:, 1] -= ltrb[:, 3] / 2.0  # T
-    ltrb[:, 2] += ltrb[:, 0]
-    ltrb[:, 3] += ltrb[:, 1]
+    ndim1, ltrb = __quick_convert(xywh, inplace)
+
+    ltrb[:, 0] = ltrb[:, 0] - ltrb[:, 2] / 2.0  # L
+    ltrb[:, 1] = ltrb[:, 1] - ltrb[:, 3] / 2.0  # T
+    ltrb[:, 2] = ltrb[:, 2] + ltrb[:, 0]
+    ltrb[:, 3] = ltrb[:, 3] + ltrb[:, 1]
     if ndim1:
         return ltrb[0]
     return ltrb
 
 
-def ltrb_to_xywh(ltrb):
-    xywh = np.array(ltrb)
-    ndim1 = xywh.ndim == 1
-    if ndim1 == 1:
-        xywh = np.array([xywh])
-    xywh[:, 2] -= xywh[:, 0]  # W = R - L  # LTWB
-    xywh[:, 3] -= xywh[:, 1]  # H = B - T  # LTWH
-    xywh[:, 0] += xywh[:, 2] / 2.0  # X = L + W / 2 # XTWH
-    xywh[:, 1] += xywh[:, 3] / 2.0  # Y = B + H / 2 # XYWH
+def ltrb_to_xywh(ltrb: T, inplace=False) -> T:
+    ndim1, xywh = __quick_convert(ltrb, inplace)
+
+    xywh[:, 2] = xywh[:, 2] - xywh[:, 0]  # W = R - L  # LTWB
+    xywh[:, 3] = xywh[:, 3] - xywh[:, 1]  # H = B - T  # LTWH
+    xywh[:, 0] = xywh[:, 0] + xywh[:, 2] / 2.0  # X = L + W / 2 # XTWH
+    xywh[:, 1] = xywh[:, 1] + xywh[:, 3] / 2.0  # Y = B + H / 2 # XYWH
     if ndim1:
         return xywh[0]
     return xywh

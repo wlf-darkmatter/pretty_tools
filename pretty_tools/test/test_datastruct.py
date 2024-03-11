@@ -589,11 +589,11 @@ class Test_Numpy_Bbox:
         from pretty_tools.datastruct.numpy_bbox import bbox_no_overlaps_area
 
         # 测试计算违被遮挡面积
-        result = bbox_no_overlaps_area(self.np_bboxes, self.np_bboxes)
+        result = bbox_no_overlaps_area(self.bbox_a, self.bbox_a)
         assert (result == np.array([2.0, 0.0, 13.0, 50.0, 4.0])).all()
 
         # 测试计算未被遮挡面积占比
-        result = bbox_no_overlaps_area(self.np_bboxes, self.np_bboxes, ratio=True)
+        result = bbox_no_overlaps_area(self.bbox_a, self.bbox_a, ratio=True)
         assert (result == np.array([2.0 / 20, 0.0, 13.0 / 49, 1, 4.0 / 21])).all()
 
 
