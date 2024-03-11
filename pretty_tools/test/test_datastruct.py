@@ -139,8 +139,6 @@ class Test_Bbox_Convert:
         assert check(ltwh_to_ltrb(self.bbox2_fp32), np.array([[0.3, 0.4, 0.8, 1.0], [1.3, 1.4, 2.8, 3.0]], dtype=np.float32)) <= 3 * error_fp32
         assert check(ltwh_to_ltrb(self.bbox2_fp16), np.array([[0.3, 0.4, 0.8, 1.0], [1.3, 1.4, 2.8, 3.0]], dtype=np.float16)) <= 3 * error_fp16
 
-        pass
-
 
 class Test_MDICT:
     def setup_method(self):
