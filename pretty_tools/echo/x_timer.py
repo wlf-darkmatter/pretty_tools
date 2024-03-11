@@ -66,6 +66,6 @@ class X_Timer:
         dt = curr_time - last_time
 
         if verbose:
-            rich.print(f"[{label.center(self.max_label_len,' ')}]: {dt:3.4f} s. timed from '{last_label.center(self.max_label_len,' ')}' to '{label.center(self.max_label_len,' ')}'")
+            rich.print(f"['{label.center(self.max_label_len,' ')}']: {dt:03.4f} s. timed from '{last_label.center(self.max_label_len,' ')}' to '{label.center(self.max_label_len,' ')}'")
 
         return dt
