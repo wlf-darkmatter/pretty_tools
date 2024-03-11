@@ -129,6 +129,21 @@ class Test_Runtime_info:
                 time.sleep(0.001)
             pass
 
+    @staticmethod
+    def test_timer():
+        from pretty_tools.echo import X_Timer
+
+        timer = X_Timer()
+
+        the_order = ["first", "second", "1-3", "1-4", "last_from_init"]
+        last_order = [None, None, "first", "first", "init_time"]
+
+        for _ in range(100):
+            for label, last_label in zip(the_order, last_order):
+                time.sleep(0.01)
+                timer.record(label, last_label=last_label, verbose=True)
+            time.sleep(1)
+
     pass
 
 
