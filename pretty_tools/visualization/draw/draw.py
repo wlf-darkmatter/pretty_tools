@@ -284,8 +284,8 @@ class Pretty_Draw:
     def draw_bboxes(
         img,
         bboxes_ltrb: np.ndarray,
-        ids: Optional[list[int]] = None,  # type: ignore
-        colors: Optional[Union[int, tuple[int, int, int], list[tuple]]] = None,  # type: ignore
+        ids: Optional[list[int]] = None,
+        colors: Optional[Union[int, tuple[int, int, int], list[tuple]]] = None,  # RGB,
         infos: Optional[list] = None,
         outline=2,
         size_font=24,
@@ -293,14 +293,20 @@ class Pretty_Draw:
     ) -> Image.Image:
         """
         传入一张图，以及一张图的标注信息，进行绘制
-        bboxes : LTRB 格式
-        ids 可选
+
+        Args:
+
+            bboxes : LTRB 格式
+            ids 可选
+            colors : 如果是使用统一的颜色，则需要输入的 colors 应当为 tuple
         """
         #! 仅支持这一种标注格式，不再做其他的适配（太麻烦，而且效率不高）
         assert bboxes_ltrb.ndim == 2, "格式必须是二维数组，长度为(n, 4)"
         assert bboxes_ltrb.shape[1] == 4
         if colors is None:
             colors = (255, 255, 255)
+        if isinstance(colors, list):
+            assert len(colors) == len(bboxes_ltrb), "如果是使用统一的颜色，则需要输入的 colors 应当为 tuple"
 
         bboxes_ltrb = copy.deepcopy(bboxes_ltrb)
         #! 一定要是np.float32或者直接用int
