@@ -87,14 +87,14 @@ class Test_Draw:
         self.img2 = Image.open(path_image_2)
         self.list_tg = [self.tg0, self.tg1, self.tg2]
         self.list_img = [self.img0, self.img1, self.img2]
-        from ContionTrack.utils import misc
+        import torch.nn.functional as F
 
 
         self.dict_images = {k: v for k, v in zip(range(len(self.list_img)), self.list_img)}
         self.dict_feature = {k: v.x for k, v in zip(range(len(self.list_tg)), self.list_tg)}
         self.dict_ids = {k: np.array(v.ids) for k, v in zip(range(len(self.list_tg)), self.list_tg)}
         self.dict_ltrb = {k: np.array(v.ori_ltrb) for k, v in zip(range(len(self.list_tg)), self.list_tg)}
-        fn = lambda feat_i, feat_j: misc.distance_tools.calc_embedding_distance(feat_i, feat_j, metric="cosine")
+        fn = lambda feat_i, feat_j: 1 - F.cosine_similarity(feat_i.unsqueeze(1), feat_j.unsqueeze(0), dim=2)
         self.mdict_similarity = mdict.combinations(self.dict_feature, fn)
 
 

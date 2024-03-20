@@ -181,81 +181,6 @@ def torch_quick_visual_2d(data: Tensor, path_save=None):
     return fig
 
 
-class distance_tools:
-    """
-    distance_tools
-
-    .. note::
-        **Stable** 模块，长期支持
-
-    距离度量计算工具, 使用 **torch** 作为运行后端
-
-
-    特征距离部分，目前支持设置 :code:`metric` 为以下几个:
-        - 余弦距离: `cosine`
-        - 闵可夫斯基距离: `minkowski`
-        - 欧氏距离: `euclidean`
-
-    .. note::
-
-        移植到 ContionTrack.utils.misc 中
-        在 **ContionTrack.utils.misc** 中，提供了一些常用的计算相似度的方法，存在于 :class:`ContionTrack.utils.misc` 中
-
-    """
-
-    @staticmethod
-    def calc_embedding_distance(data_a: Tensor, data_b: Tensor, metric="cosine", *args, **kwargs) -> Tensor:
-        """
-        输入两组特征向量，计算特征距离矩阵 (移植到 ContionTrack.utils.misc 中)
-
-        Args:
-            data_a (torch.Tensor): :math:`(n, d)` 向量
-            data_b (torch.Tensor): :math:`(m, d)` 向量
-
-        .. note::
-            ! 输出的距离越 **小** 越相似
-        """
-        # from scipy.spatial.distance import cdist
-        assert data_a.ndim == 2 and data_b.ndim == 2, "输入的数据必须是二维的"
-        assert data_a.shape[1] == data_b.shape[1], "输入的深度必须是一致"
-        dist_matrix = torch.zeros((len(data_a), len(data_b)), dtype=torch.float)
-        if len(data_a) == 0 or len(data_b) == 0:
-            return dist_matrix
-        if metric == "minkowski":
-            dist_matrix = torch.cdist(data_a, data_b, *args, **kwargs)
-        elif metric == "cosine":
-            dist_matrix = 1 - F.cosine_similarity(data_a.unsqueeze(1), data_b.unsqueeze(0), dim=2)
-        elif metric == "euclidean":
-            dist_matrix = torch.cdist(data_a, data_b)  #! 注意，使用欧氏距离的时候，这里的距离范围并没有限定在 [0, 1] 之间
-        else:
-            raise NotImplementedError("不支持的距离度量")
-
-        dist_matrix = torch.maximum(0, dist_matrix)
-        return dist_matrix
-
-    @staticmethod
-    def calc_embedding_similarity(data_a: Tensor, data_b: Tensor, metric="cosine", *args, **kwargs) -> Tensor:
-        """
-        输入两组特征向量，计算特征相似度矩阵 (移植到 ContionTrack.utils.misc 中)
-
-        Args:
-            data_a (torch.Tensor): :math:`(n, d)` 向量
-            data_b (torch.Tensor): :math:`(m, d)` 向量
-
-        .. note::
-            ! 输出的距离越 **大** 越相似
-        """
-        assert data_a.ndim == 2 and data_b.ndim == 2, "输入的数据必须是二维的"
-        assert data_a.shape[1] == data_b.shape[1], "输入的深度必须是一致"
-        if metric == "cosine":
-            sim_matrix = F.cosine_similarity(data_a.unsqueeze(1), data_b.unsqueeze(0), dim=2)
-            return sim_matrix
-        else:
-            dist_matrix = distance_tools.calc_embedding_distance(data_a, data_b, metric, *args, **kwargs)
-
-            return 1 - dist_matrix
-
-
 from pretty_tools.datastruct import np_enhance
 
 
@@ -265,6 +190,9 @@ class Utils_Sparse:
         **Stable** 模块，长期支持
 
     torch_enhance 中的 稀疏矩阵工具类
+
+    # todo 20240320: 该模块考虑重新设计，保证新添加的功能，和其他功能都不耦合，并且都有明确的使用说明
+
     """
 
     @classmethod
@@ -376,3 +304,121 @@ class Utils_Sparse:
         sum_sparray = cls.sum(seq_sparray)
         sum_sparray *= 1 / len(seq_sparray)
         return sum_sparray
+
+    @classmethod
+    def get_value_by_edge_index(cls, sparse_tensor: torch.Tensor, edge_index: Union[torch.Tensor, list, np.ndarray], method=0) -> torch.Tensor:
+        """
+        🌟 20240320 新方法
+        通过 edge_index 获取稀疏矩阵的值，本质上就是通过索引获取目标值，只不过 Torch 内部的方法只能获取一个索引值
+
+
+        Args:
+            sparse_tensor (torch.Tensor): 稀疏矩阵
+            edge_index (torch.Tensor): 索引
+
+        Return:
+            返回类型和输入的 sparse_tensor 相匹配
+
+        ['CPU index=np ']: 3.6730 s.
+        ['CPU index=cpu']: 3.8327 s.
+        ['CPU index=list']: 4.7223 s.
+        ['CPU index=gpu ']: 3.9150 s.
+
+        ['GPU index=cpu ']: 1.9727 s.
+        ['GPU index=list']: 2.8249 s.
+        ['GPU index=np ']: 1.6961 s.
+        ['GPU index=gpu ']: 1.4405 s.
+
+        """
+        if isinstance(edge_index, list):
+            edge_index = np.array(edge_index)
+        if isinstance(edge_index, np.ndarray):
+            edge_index = torch.from_numpy(edge_index)
+
+        assert edge_index.shape[0] == len(sparse_tensor.shape)
+        assert edge_index.dtype == torch.long
+        if edge_index.device != sparse_tensor.device:
+            edge_index = edge_index.to(sparse_tensor.device)
+
+        if method == 0:
+            # 构建一个主对角的稀疏矩阵，通过相乘来提取
+            index_mask = torch.sparse_coo_tensor(edge_index, torch.ones([edge_index.shape[1]], dtype=sparse_tensor.dtype, device=sparse_tensor.device), size=sparse_tensor.shape)
+            # * index_mask 不能加 .coalesce()，会导致无法给出重复的索引
+            return sparse_tensor.sparse_mask(index_mask)._values()
+
+
+if __name__ == "__main__":
+    pass
+    # * 这里进行速度测试
+    from pretty_tools.echo import X_Timer
+    import rich
+
+    def speed_test_sparse_cut():
+
+        n = 3000
+        m = 4000
+        n_data = 2000
+        test_times = 10000
+        # * 从稀疏矩阵中提取出 test_times 个数，其中一半是稀疏矩阵存放的值，另一半会命中空区域
+
+        edge_index_a = torch.randint(0, n, [1, n_data])
+        edge_index_b = torch.randint(0, m, [1, n_data])
+        value = torch.randn([n_data])
+        edge_index = torch.cat([edge_index_a, edge_index_b])
+        sparse_tensor_cpu = torch.sparse_coo_tensor(edge_index, value)
+        sparse_tensor_gpu = torch.sparse_coo_tensor(edge_index, value).to("cuda")
+
+        edge_index_cut_a = torch.randint(0, n, [1, n_data // 2])
+        edge_index_cut_b = torch.randint(0, m, [1, n_data // 2])
+        edge_index_cut = torch.cat([edge_index_cut_a, edge_index_cut_b])
+        edge_index_cut = torch.cat([edge_index_cut, edge_index[:, : n_data // 2]], dim=1)
+        edge_index_cut_np = edge_index_cut.numpy()
+        edge_index_cut_list = edge_index_cut.tolist()
+        edge_index_cut_gpu = edge_index_cut.to("cuda")
+        rich.print("测试 get_value_by_edge_index")
+        sparse_tensor_test = torch.sparse_coo_tensor(torch.tensor([[0, 1, 2], [0, 1, 2]]), torch.tensor([-1, -2, -3]))
+        edge_index_test = torch.tensor(
+            [
+                [0, 2, 0, 0, 0],
+                [0, 2, 0, 1, 1],
+            ]
+        )  # **看看是否会重复输出相同的元素
+        cut_value_test = Utils_Sparse.get_value_by_edge_index(sparse_tensor_test, edge_index_test)
+
+        assert cut_value_test.tolist() == [-1, -3, -1, 0, 0]
+
+        x_timer = X_Timer()
+
+        for _ in range(test_times):
+            cut_value = Utils_Sparse.get_value_by_edge_index(sparse_tensor_cpu, edge_index_cut_np)
+        x_timer.record(f"CPU index=np", verbose=True)
+
+        for _ in range(test_times):
+            cut_value = Utils_Sparse.get_value_by_edge_index(sparse_tensor_cpu, edge_index_cut)
+        x_timer.record(f"CPU index=cpu", verbose=True)
+
+        for _ in range(test_times):
+            cut_value = Utils_Sparse.get_value_by_edge_index(sparse_tensor_cpu, edge_index_cut_gpu)
+        x_timer.record(f"CPU index=gpu", verbose=True)
+
+        for _ in range(test_times):
+            cut_value = Utils_Sparse.get_value_by_edge_index(sparse_tensor_cpu, edge_index_cut_list)
+        x_timer.record(f"CPU index=list", verbose=True)
+
+        for _ in range(test_times):
+            cut_value = Utils_Sparse.get_value_by_edge_index(sparse_tensor_gpu, edge_index_cut_np)
+        x_timer.record(f"GPU index=np", verbose=True)
+
+        for _ in range(test_times):
+            cut_value = Utils_Sparse.get_value_by_edge_index(sparse_tensor_gpu, edge_index_cut)
+        x_timer.record(f"GPU index=cpu", verbose=True)
+
+        for _ in range(test_times):
+            cut_value = Utils_Sparse.get_value_by_edge_index(sparse_tensor_gpu, edge_index_cut_gpu)
+        x_timer.record(f"GPU index=gpu", verbose=True)
+        for _ in range(test_times):
+
+            cut_value = Utils_Sparse.get_value_by_edge_index(sparse_tensor_gpu, edge_index_cut_list)
+        x_timer.record(f"GPU index=list", verbose=True)
+
+    speed_test_sparse_cut()
