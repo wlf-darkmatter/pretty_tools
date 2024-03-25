@@ -7,24 +7,24 @@
 # * 总结，inplace更快，速度上，
 #! Numpy >> Tensor(GPU) > Tensor(CPU)
 # * 耗时如下
-['numpy (inplace=True)']:        0.5867 s   13.5x
-['numpy ']:                      0.8959 s   8.88x
-['tensor(CPU) (inplace=True)']:  4.7858 s   1.66x
-['    tensor(CPU)     ']:        7.9595 s   1.00x
-['tensor(GPU) (inplace=True)']:  8.2551 s   0.96x
-['    tensor(GPU)     ']:        11.8812 s  0.67x
+['numpy (inplace=True)']:        0.5301 s   13.5x
+['numpy ']:                      0.6918 s   8.88x
+['tensor(CPU) (inplace=True)']:  5.0724 s   1.66x
+['    tensor(CPU)     ']:        7.3101 s   1.00x
+['tensor(GPU) (inplace=True)']:  8.6720 s   0.96x
+['    tensor(GPU)     ']:        12.3603 s  0.67x
 
 #? 大批量矩阵运算 循环条件速度测试， 循环条件 46*24，两层循环，矩阵大小为 1000000
 
 # * 总结，inplace更快，速度上，
 #! Tensor(GPU) > Tensor(CPU) >> Numpy
 # * 耗时如下
-['tensor(GPU) (inplace=True)']: 0.1369 s
-['tensor(GPU)']:                0.2200 s
-['tensor(CPU) (inplace=True)']: 0.5653 s
-['tensor(CPU)']:                0.9554 s.
-['numpy (inplace=True)']:       7.9395 s
-['numpy']:                      11.2856 s
+['tensor(GPU) (inplace=True)']: 0.1370 s
+['tensor(GPU)']:                0.1965 s
+['tensor(CPU) (inplace=True)']: 0.6402 s
+['tensor(CPU)']:                0.9220 s.
+['numpy (inplace=True)']:       7.8578 s
+['numpy']:                      10.5766 s
 
 
 """
@@ -80,8 +80,8 @@ def ltwh_to_xywh(ltwh: T, inplace=False) -> T:
     """
     ndim1, xywh = __quick_convert(ltwh, inplace)
 
-    xywh[:, 0] = xywh[:, 0] + xywh[:, 2] / 2.0
-    xywh[:, 1] = xywh[:, 1] + xywh[:, 3] / 2.0
+    xywh[:, 0] = xywh[:, 0] + 0.5 * xywh[:, 2]
+    xywh[:, 1] = xywh[:, 1] + 0.5 * xywh[:, 3]
     if ndim1:
         return xywh[0]
     return xywh
@@ -91,8 +91,8 @@ def xywh_to_ltwh(xywh: T, inplace=False) -> T:
     """ """
     ndim1, ltwh = __quick_convert(xywh, inplace)
 
-    ltwh[:, 0] = ltwh[:, 0] - ltwh[:, 2] / 2.0  # L
-    ltwh[:, 1] = ltwh[:, 1] - ltwh[:, 3] / 2.0  # T
+    ltwh[:, 0] = ltwh[:, 0] - 0.5 * ltwh[:, 2]  # L
+    ltwh[:, 1] = ltwh[:, 1] - 0.5 * ltwh[:, 3]  # T
     if ndim1:
         return ltwh[0]
     return ltwh
@@ -102,8 +102,8 @@ def xywh_to_ltrb(xywh: T, inplace=False) -> T:
     """ """
     ndim1, ltrb = __quick_convert(xywh, inplace)
 
-    ltrb[:, 0] = ltrb[:, 0] - ltrb[:, 2] / 2.0  # L
-    ltrb[:, 1] = ltrb[:, 1] - ltrb[:, 3] / 2.0  # T
+    ltrb[:, 0] = ltrb[:, 0] - 0.5 * ltrb[:, 2]  # L
+    ltrb[:, 1] = ltrb[:, 1] - 0.5 * ltrb[:, 3]  # T
     ltrb[:, 2] = ltrb[:, 2] + ltrb[:, 0]
     ltrb[:, 3] = ltrb[:, 3] + ltrb[:, 1]
     if ndim1:
@@ -116,8 +116,8 @@ def ltrb_to_xywh(ltrb: T, inplace=False) -> T:
 
     xywh[:, 2] = xywh[:, 2] - xywh[:, 0]  # W = R - L  # LTWB
     xywh[:, 3] = xywh[:, 3] - xywh[:, 1]  # H = B - T  # LTWH
-    xywh[:, 0] = xywh[:, 0] + xywh[:, 2] / 2.0  # X = L + W / 2 # XTWH
-    xywh[:, 1] = xywh[:, 1] + xywh[:, 3] / 2.0  # Y = B + H / 2 # XYWH
+    xywh[:, 0] = xywh[:, 0] + 0.5 * xywh[:, 2]  # X = L + W / 2 # XTWH
+    xywh[:, 1] = xywh[:, 1] + 0.5 * xywh[:, 3]  # Y = B + H / 2 # XYWH
     if ndim1:
         return xywh[0]
     return xywh
@@ -171,7 +171,7 @@ if __name__ == "__main__":
         from pretty_tools.echo import X_Timer
         from pretty_tools.datastruct.bbox_convert import ltrb_to_ltwh, ltrb_to_xywh, ltwh_to_ltrb, ltwh_to_xywh, xywh_to_ltrb, xywh_to_ltwh
 
-        N = 500
+        N = 50
         bs = 24
         repeat = 60
 
@@ -257,3 +257,6 @@ if __name__ == "__main__":
 
         wrap_fn(random_bbox_tensor_gpu, inplace=True)
         timer.record("tensor(GPU) (inplace=True)", verbose=True)
+
+    test_speed_multi_for_small_array_convert()
+    test_speed_huge_array_convert()
