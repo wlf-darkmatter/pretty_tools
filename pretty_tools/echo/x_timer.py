@@ -35,6 +35,17 @@ class X_Timer:
         return self.init_time
 
     def record(self, label: str, last_label: str = None, verbose=False) -> float:
+        """
+        Args:
+            label (str): 当前的label
+            last_label (str): 用以统计时间差的上一个label，如果为 None 则表示上一个label为自己本身
+            verbose (bool): 是否打印时间
+            
+        Return:
+            float: 时间差
+
+        """
+
         curr_time = time.time()
         if label not in self.list_item:
             self.list_item.append(label)
