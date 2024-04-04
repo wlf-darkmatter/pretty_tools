@@ -959,7 +959,7 @@ class Pretty_Draw:
         annot=False,
         square=False,
         cmap=None,
-    ) -> tuple[Figure, np.ndarray[Axes]]:
+    ) -> tuple[Figure, np.ndarray[Any, Axes]]:
         """
         同时绘制多个热图 (基于 seaborn)。并且共享同一个颜色轴，通过调用 ``GridSpec`` 解决了共享颜色轴时创建新轴进而影响了其他轴显示效果的问题
 

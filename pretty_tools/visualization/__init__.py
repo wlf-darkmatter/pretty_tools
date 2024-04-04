@@ -31,6 +31,3 @@ plt.rcParams["font.family"] = ["Times New Roman", "Microsoft YaHei"]
 # font_families = sorted(set([f.name for f in fm.fontManager.ttflist]))
 # for font_family in font_families:
 #     print(font_family)
-
-__all__ = ["draw_bboxes", "bbox_convert_np", "Visual_Graph", "Visual_Track", "Pretty_Draw"]
-classes = __all__
