@@ -76,7 +76,7 @@ def get_ext_graph_enhance():
 
 setup(
     name="pretty_tools",
-    version="0.1.9",
+    version="0.2.0",
     author="Lingfeng Wang",
     author_email="wlf_x_contion@sina.com",
     description="A pretty tools",
