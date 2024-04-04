@@ -16,6 +16,12 @@ from .multi_index_dict import mdict
 from .track_graph import TrackCameraGraph
 from .track_instance import TrackCameraInstances, TrackInstance
 
+
+try:
+    from . import cython_bbox
+except:
+    print("pretty_tools/datastruct/__init__.py: cython_bbox not found, please compile it first")
+
 __all__ = [
     "mdict",
     "graph_enhance",

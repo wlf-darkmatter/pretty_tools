@@ -43,6 +43,7 @@ from matplotlib.offsetbox import AnnotationBbox, OffsetImage
 from matplotlib.patches import ConnectionPatch
 from pandas import DataFrame
 from PIL import Image, ImageDraw, ImageFont
+import itertools
 
 # * 处理部分需要使用到torch的库
 try:
@@ -959,6 +960,7 @@ class Pretty_Draw:
         annot=False,
         square=False,
         cmap=None,
+        use_same_cbar=True,
     ) -> tuple[Figure, np.ndarray[Any, Axes]]:
         """
         同时绘制多个热图 (基于 seaborn)。并且共享同一个颜色轴，通过调用 ``GridSpec`` 解决了共享颜色轴时创建新轴进而影响了其他轴显示效果的问题
@@ -967,7 +969,15 @@ class Pretty_Draw:
             nrows (int): 行数
             ncols (int): 列数
             tuple_matrix : 矩阵形式 或者 :class:`tuple` 形式存放的 :class:`np.ndarray` 矩阵，用以可视化
+            use_same_cbar: 是否共用颜色条
 
+        .. note::
+
+            默认将 x 轴的刻度绘制在图像的上方
+
+        .. todo:
+
+            #todo: 不知道为什么，画出来的颜色条有点过长
 
         Example
         -------
@@ -1013,7 +1023,6 @@ class Pretty_Draw:
 
         """
         import matplotlib.cm as cm
-        import matplotlib.colors as mcolors
         from seaborn import cm as sns_cm
 
         if cmap is None:
@@ -1036,29 +1045,47 @@ class Pretty_Draw:
         assert len(tuple_matrix[0]) == ncols, "传入的可视化矩阵应当是 元组形式，元组的尺寸应当为 (nrows, ncols) "
 
         fig = plt.figure(dpi=dpi, figsize=figsize, constrained_layout=True)  # * 使得各子图之间的距离自动调整
+
         # fig = plt.figure(dpi=dpi, figsize=figsize)
         # * 本质上分了两个区域，一个是热图，一个是颜色条，颜色条这里只能放在右边(也可以改)
-        gs = GridSpec(nrows, ncols + 1, width_ratios=[1] * ncols + [0.1], height_ratios=[1] * nrows, figure=fig)
+        if use_same_cbar:
+            gs = GridSpec(nrows, ncols + 1, width_ratios=[1] * ncols + [0.1], height_ratios=[1] * nrows, figure=fig)
+            vmax = max([adj.max() for adj in itertools.chain(*tuple_matrix)])
+            vmin = max([adj.min() for adj in itertools.chain(*tuple_matrix)])
+        else:
+            index = 0
+            pass
+            # gs = GridSpec(nrows, ncols, width_ratios=[1] * ncols, height_ratios=[1] * nrows, figure=fig)
+
         np_ax = np.zeros((nrows, ncols), dtype=np.object_)
 
-        vmin = np.inf
-        vmax = -np.inf
         for i in range(nrows):
             for j in range(ncols):
+
                 adj = tuple_matrix[i][j]
-                ax = fig.add_subplot(gs[i, j])
-                sns.heatmap(adj, ax=ax, cbar=False, cmap=cmap, annot=annot, square=square)  # * 共用颜色条
-                ax.xaxis.set_ticks_position("top")  # * 将x轴的位置设置在顶部
-                if adj.max() > vmax:
-                    vmax = adj.max()
-                if adj.min() < vmin:
-                    vmin = adj.min()
+
+                if use_same_cbar:
+                    ax = fig.add_subplot(gs[i, j])
+                    sns.heatmap(adj, ax=ax, cbar=False, vmin=vmin, vmax=vmax, cmap=cmap, annot=annot, square=square)  # * 共用颜色条
+                else:
+                    index += 1
+                    ax = fig.add_subplot(nrows, ncols, index)
+                    sns.heatmap(adj, ax=ax, cmap=cmap, annot=annot, square=square)  # * 不共用颜色条
+                    cbar = ax.collections[0].colorbar
+                    # cbar
+                    # cbar.set_size(cbar.ax.get_size())
+
+                ax.xaxis.set_ticks_position("top")  # ! 默认将 x 轴的位置设置在顶部
                 np_ax[i, j] = ax
 
-        norm = mcolors.Normalize(vmin=vmin, vmax=vmax)
-        c_ax = fig.add_subplot(gs[:, -1])
+        if use_same_cbar:
+            import matplotlib.colors as mcolors
 
-        fig.colorbar(cm.ScalarMappable(norm=norm, cmap=cmap), cax=c_ax)  # colorbar(ax=c_ax) 和  colorbar(cax=c_ax) 是有区别的，前者会绘制颜色条，但是左侧留空了
+            norm = mcolors.Normalize(vmin=vmin, vmax=vmax)
+            c_ax = fig.add_subplot(gs[:, -1])
+            fig.colorbar(cm.ScalarMappable(norm=norm, cmap=cmap), cax=c_ax)  # colorbar(ax=c_ax) 和  colorbar(cax=c_ax) 是有区别的，前者会绘制颜色条，但是左侧留空了
+        else:
+            pass
 
         return fig, np_ax
 
