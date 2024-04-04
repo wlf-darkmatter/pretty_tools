@@ -20,7 +20,6 @@ for font_file in font_files:
     fm.fontManager.addfont(font_file)
 f"""
 自己库里的字体名字叫做
-{path_font_emoji.name}: Noto Color Emoji
 {path_font_arial.name}: Arial
 """
 
