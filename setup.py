@@ -85,15 +85,15 @@ setup(
     ext_modules=get_ext_cythonbbox() + get_cython_misc_extensions() + get_ext_numpy_enhance() + get_ext_graph_enhance(),
     setup_requires=["setuptools>=18.0", "Cython", "numpy"],
     classifiers=[
-        "Programming Language :: Python :: 3.9",
-        "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
     install_requires=[
         "Cython",
         "numpy",
+        "seaborn",
         "rich",
         "rich[jupyter]",
         "gpuinfo",
