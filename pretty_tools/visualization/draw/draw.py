@@ -27,10 +27,11 @@ import math
 import sys
 from copy import deepcopy
 from functools import partial
-from typing import Any, Dict, List, Literal, Optional, Sequence, Tuple, Union
+from typing import Any, Dict, List, Literal, Optional, Sequence, Tuple, Union, TypedDict, Unpack
 
 import cv2
 import matplotlib
+import matplotlib.figure
 import matplotlib.transforms as mtransforms
 import numpy as np
 import seaborn as sns
@@ -44,6 +45,7 @@ from matplotlib.patches import ConnectionPatch
 from pandas import DataFrame
 from PIL import Image, ImageDraw, ImageFont
 import itertools
+import functools
 
 # * 处理部分需要使用到torch的库
 try:
@@ -155,6 +157,18 @@ class Visiual_Tools:
                 list_cut.append(image[:, bbox[1] : bbox[3], bbox[0] : bbox[2]])
 
         return list_cut
+
+
+class Dict_Kwargs_GridSpec(TypedDict):
+    figure: matplotlib.figure.Figure
+    left: float
+    bottom: float
+    right: float
+    top: float
+    wspace: float
+    hspace: float
+    width_ratios: Sequence[float]
+    height_ratios: Sequence[float]
 
 
 class Pretty_Draw:
@@ -954,13 +968,16 @@ class Pretty_Draw:
         nrows: int,
         ncols: int,
         tuple_matrix: Union[Sequence[Sequence[np.ndarray]], Sequence[np.ndarray]],
-        *,
         figsize: Optional[tuple[int, int]] = None,
-        dpi=None,
-        annot=False,
-        square=False,
+        dpi: int = None,
+        annot: bool = False,
+        square: bool = False,
+        constrained_layout=True,
         cmap=None,
-        use_same_cbar=True,
+        fmt: str = ".2g",
+        use_same_cbar: bool = True,
+        cbar_kws: Optional[dict] = None,
+        kwargs_grid: Dict_Kwargs_GridSpec = None,
     ) -> tuple[Figure, np.ndarray[Any, Axes]]:
         """
         同时绘制多个热图 (基于 seaborn)。并且共享同一个颜色轴，通过调用 ``GridSpec`` 解决了共享颜色轴时创建新轴进而影响了其他轴显示效果的问题
@@ -970,6 +987,9 @@ class Pretty_Draw:
             ncols (int): 列数
             tuple_matrix : 矩阵形式 或者 :class:`tuple` 形式存放的 :class:`np.ndarray` 矩阵，用以可视化
             use_same_cbar: 是否共用颜色条
+            cbar_kws: 颜色条的参数，可选. 如 cbar_kws={"shrink": .82} 对颜色条进行缩放
+            kwargs_grid: Gridspec 的参数
+            constrained_layout: 是否使用 constrained_layout 使得各子图之间的距离自动调整
 
         .. note::
 
@@ -1029,6 +1049,8 @@ class Pretty_Draw:
             cmap = sns_cm.rocket
         elif isinstance(cmap, str):
             cmap = matplotlib.colormaps[cmap]  # type: ignore
+        if cbar_kws is None:
+            cbar_kws = {}
 
         if dpi is None:
             dpi = cls.dpi
@@ -1044,12 +1066,16 @@ class Pretty_Draw:
         assert len(tuple_matrix) == nrows, "传入的可视化矩阵应当是 元组形式，元组的尺寸应当为 (nrows, ncols) "
         assert len(tuple_matrix[0]) == ncols, "传入的可视化矩阵应当是 元组形式，元组的尺寸应当为 (nrows, ncols) "
 
-        fig = plt.figure(dpi=dpi, figsize=figsize, constrained_layout=True)  # * 使得各子图之间的距离自动调整
+        fig = plt.figure(dpi=dpi, figsize=figsize, constrained_layout=constrained_layout)  # * 使得各子图之间的距离自动调整
 
         # fig = plt.figure(dpi=dpi, figsize=figsize)
         # * 本质上分了两个区域，一个是热图，一个是颜色条，颜色条这里只能放在右边(也可以改)
         if use_same_cbar:
-            gs = GridSpec(nrows, ncols + 1, width_ratios=[1] * ncols + [0.1], height_ratios=[1] * nrows, figure=fig)
+            ori_kwargs_grid = {"width_ratios": [1] * ncols + [0.1], "figure": fig}
+            if kwargs_grid is not None:
+                ori_kwargs_grid.update(kwargs_grid)
+
+            gs = GridSpec(nrows, ncols + 1, **ori_kwargs_grid)
             vmax = max([adj.max() for adj in itertools.chain(*tuple_matrix)])
             vmin = max([adj.min() for adj in itertools.chain(*tuple_matrix)])
         else:
@@ -1059,6 +1085,8 @@ class Pretty_Draw:
 
         np_ax = np.zeros((nrows, ncols), dtype=np.object_)
 
+        wrap_heatmap_fn = functools.partial(sns.heatmap, cmap=cmap, annot=annot, square=square, fmt=fmt)
+
         for i in range(nrows):
             for j in range(ncols):
 
@@ -1066,15 +1094,18 @@ class Pretty_Draw:
 
                 if use_same_cbar:
                     ax = fig.add_subplot(gs[i, j])
-                    sns.heatmap(adj, ax=ax, cbar=False, vmin=vmin, vmax=vmax, cmap=cmap, annot=annot, square=square)  # * 共用颜色条
+                    wrap_heatmap_fn(adj, ax=ax, cbar=False, vmin=vmin, vmax=vmax)  # * 共用颜色条
                 else:
                     index += 1
                     ax = fig.add_subplot(nrows, ncols, index)
-                    sns.heatmap(adj, ax=ax, cmap=cmap, annot=annot, square=square)  # * 不共用颜色条
-                    cbar = ax.collections[0].colorbar
-                    # cbar
-                    # cbar.set_size(cbar.ax.get_size())
+                    wrap_heatmap_fn(adj, ax=ax, cbar_kws=cbar_kws)  # * 不共用颜色条
 
+                # ? debug ===========
+                # axpos = ax.get_position()
+                # rect = matplotlib.patches.Rectangle((axpos.x0, axpos.y0), axpos.width, axpos.height, lw=3, ls="--", ec="r", fc="none", alpha=0.5, transform=ax.figure.transFigure)
+                # ax.add_patch(rect)
+                # ax.add_artist(rect)
+                # ? debug ===========
                 ax.xaxis.set_ticks_position("top")  # ! 默认将 x 轴的位置设置在顶部
                 np_ax[i, j] = ax
 
