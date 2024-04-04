@@ -15,13 +15,17 @@ mpl.rcParams["axes.unicode_minus"] = False
 # * 开始添加注册中文字体
 font_dirs = [str(PATH_RESOURCES)]
 font_files = fm.findSystemFonts(fontpaths=font_dirs)
-
 for font_file in font_files:
     fm.fontManager.addfont(font_file)
+
 f"""
 自己库里的字体名字叫做
 {path_font_arial.name}: Arial
+{path_font_time_new_roman.name}: Times New Roman
+{path_font_msyh.name}: Microsoft YaHei
 """
+
+plt.rcParams["font.family"] = ["Times New Roman", "Microsoft YaHei"]
 
 # 打印所有可用字体族
 # font_families = sorted(set([f.name for f in fm.fontManager.ttflist]))

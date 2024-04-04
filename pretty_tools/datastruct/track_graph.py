@@ -7,7 +7,11 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 import joblib as jl
 import numpy as np
 from PIL import Image
-from torch_geometric.data import Data
+
+try:
+    from torch_geometric.data import Data
+except:
+    pass
 
 from .general_ann import GeneralAnn
 

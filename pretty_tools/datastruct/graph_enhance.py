@@ -88,6 +88,7 @@ r"""
 
 
 """
+
 import warnings
 from copy import deepcopy
 from functools import lru_cache
@@ -95,221 +96,21 @@ from typing import Any, Callable, Dict, Generic, List, Optional, Sequence, Tuple
 
 import numpy as np
 import scipy.sparse as sci_sparse
+
+
 import torch
 import torch_geometric as pyg
 import torch_geometric.utils as pyg_utils
 import torch_sparse
-from scipy.sparse import bsr_matrix, coo_matrix, csc_array, csr_array, lil_array, sparray, spmatrix
 from torch import Tensor
 from torch_geometric.data import Batch, Data
 from torch_geometric.data.collate import collate
 from torch_geometric.loader.dataloader import Collater
 from torch_geometric.typing import OptTensor
 
+from scipy.sparse import bsr_matrix, coo_matrix, csc_array, csr_array, lil_array, sparray, spmatrix
+
 T = TypeVar("T")
-Array_Like = TypeVar("Array_Like", torch.Tensor, np.ndarray)
-
-
-class CohereGraph:
-    """
-    重新思考这个类的设计，把一些不必要的功能给舍弃掉
-
-    这里最核心的就是一个 全相机 graph，不要添加其他没有必要的功能，导致性能不好
-
-    :note: 由于关系到赋值问题，所以这里并不将 :code:`self.data` 的属性暴露出来进行封装，而是直接操作 :code:`self.data` 的属性即可
-
-    Attributes:
-        backend (str): 用于指定使用的后端，可选值为 "torch" 或者 "numpy"，默认为 "numpy",
-
-    """
-
-    backend = "numpy"
-
-    def __init__(
-        self,
-        x,
-        edge_index=None,
-        list_len: Optional[Sequence[int]] = None,
-        x_pos=None,
-        dtype=None,
-        device=None,
-        y=None,
-    ) -> None:
-        """
-
-        args:
-            x: :code:`shape=[n, d]` 这里的x是所有节点的特征
-            edge_index: :code:`shape=[2, m]` 这里的 edge_index 应当就是拼接处理后的
-            list_len: 每个相机的节点个数, **这里并不是 cumsum 累加求和后的**
-            x_pos: :code:`shape=[n, 2]` 节点的位置信息，位置信息应当是根据图像尺寸进行了归一化操作的，分布在 :code`[0, 1]` 之间
-
-
-        .. note::
-
-            如果是其他格式，那也是先生成了numpy，然后转换过去的
-
-            内部的 self.data.x 的顺序一定是按照相机的顺序排列的
-
-        """
-        warnings.warn(
-            "This class is deprecated and will be removed in the future.",
-            DeprecationWarning,
-        )
-        self.data = Data(x, edge_index)
-
-        if device is None:
-            self.device = "cpu"
-        else:
-            self.device = device
-
-        self._dtype = None
-        if dtype is not None:
-            self.dtype = dtype
-
-        if list_len is not None:
-            self.list_len = list_len
-        else:
-            self.list_len = [len(x)]  # * 如果没有输入，则将整个视为一整块进行处理
-
-        if x_pos is not None:
-            assert x_pos.shape[0] == x.shape[0], "x_pos.shape[0] != x.shape[0], 两者应当具有相同的节点个数"
-            assert x_pos.shape[1] == 2, "x_pos.shape[1] != 2, 位置信息应当是二维的, shape 的定义和 :code:`edge_index` 不一致"
-            self.data["pos"] = x_pos
-
-        if y is not None:
-            assert y.shape[0] == x.shape[0], "y.shape[0] != x.shape[0], 两者应当具有相同的节点个数"
-            self.data["y"] = y
-
-        self.to(device)
-
-    def to(self, device):
-        self.device = device
-        self.data.to(device)
-
-    @property
-    def dtype(self):
-        return self._dtype
-
-    @dtype.setter
-    def dtype(self, dtype):
-        """
-        # todo 这里之后可能要区分一下 numpy 和 torch
-        """
-        self._dtype = dtype
-        if self.data.x is not None:
-            self.data["x"] = self.data.x.type(dtype)
-        if self.data.edge_index is not None:
-            self.data["edge_index"] = self.data.edge_index.type(dtype)
-        if self.data.pos is not None:
-            self.data["pos"] = self.data.pos.type(dtype)
-        if self.data.edge_attr is not None:
-            self.data["edge_attr"] = self.data.edge_attr.type(dtype)
-        if self.data.y is not None:
-            self.data["y"] = self.data.y.type(dtype)
-
-    @property
-    def num_block(self) -> int:
-        """
-        相机个数，也可以说是 **分块** (`block`) 的个数
-        """
-        return len(self.list_len)
-
-    @property
-    @lru_cache(maxsize=1)
-    def cumsum(self) -> np.ndarray:
-        """
-        获取每个相机的节点个数的累加和，起始项为零
-        """
-        return np.cumsum([0] + self.list_len)  # type: ignore
-
-    @property
-    def num_nodes(self) -> int:
-        if self.data.num_nodes is None:
-            return 0
-        else:
-            return self.data.num_nodes
-
-    @property
-    def x_onehot(self):
-        """
-        用以区分不同 **分块**(`block`) 的 one-hot 编码, 编码数从 :code:`0` 开始
-        """
-        from pretty_tools.datastruct.np_enhance import cy_onehot_by_cumulate
-
-        result = cy_onehot_by_cumulate(self.cumsum, 0)
-
-        if self.backend == "numpy":
-            return result
-
-        elif self.backend == "torch":
-            import torch
-
-            return torch.as_tensor(result).to(self.device)  # as_tensor 会共享内存，反正这里不需要复制这个矩阵，就用 as_tensor 吧
-
-    @property
-    @lru_cache(maxsize=1)
-    def x_cluster(self):
-        """
-        输出一个数组，用以区分不同 **分块** (`block`) 的索引, 索引数从 :code:`0` 开始
-
-        example
-        -------
-        .. code::
-
-            a: CohereGraph
-            a.cumsum
-            >>> array([ 0, 10, 17, 24])
-
-            a.x_cluster
-            >>> array([
-                0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
-                1., 1., 1., 1., 1., 1., 1.,
-                2., 2., 2., 2., 2., 2., 2.])
-
-        """
-        from pretty_tools.datastruct.np_enhance import cy_cum_to_index
-
-        output = cy_cum_to_index(self.cumsum)
-        if self.backend == "numpy":
-            return output
-        else:
-            import torch
-
-            return torch.as_tensor(output).to(self.device)  # as_tensor 会共享内存，反正这里不需要复制这个矩阵，就用 as_tensor 吧
-
-    def __repr__(self) -> str:
-        return f"{self.__class__.__name__}(num_block={len(self.list_len)}, list_len={self.list_len})"
-
-    @classmethod
-    def merge_from(cls, list_graph, dtype=None, device=None):
-        """
-        将多个图结构合并组成一个大的图结构，同时设定一个
-        """
-        import torch
-
-        list_len = [len(graph.x) for graph in list_graph]
-
-        new_x = torch.cat([graph.x for graph in list_graph])
-        last_len = 0
-        new_edge_index = []
-        combine_pos = []
-        for graph in list_graph:
-            if graph.edge_index is not None:  #! 巨大傻逼的 bug，这里的 edge_index 有可能是 None（因为只有一个节点）
-                new_edge_index.append(graph.edge_index + last_len)
-            last_len += len(graph.x)
-            combine_pos.append(torch.Tensor(graph.pos[:, :2]))
-        new_edge_index = torch.cat(new_edge_index, dim=1)
-        combine_pos = torch.cat(combine_pos, dim=0)
-        result = cls(
-            new_x,
-            new_edge_index,
-            list_len=list_len,
-            x_pos=combine_pos,
-            dtype=dtype,
-            device=device,
-        )
-
-        return result
 
 
 def block_pair_separate(
@@ -801,9 +602,9 @@ class Batch_Multi_Graph:
     @classmethod
     def Batch_Block_gt_edge_index(
         cls,
-        y: Array_Like,
+        y,
         len_graph: list[np.ndarray],
-    ) -> Array_Like:
+    ):
         """
 
         如果输入的类型是 ``torch.Tensor``，则返回的也是 ``torch.Tensor``

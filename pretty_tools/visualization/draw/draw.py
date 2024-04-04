@@ -1,6 +1,10 @@
 """
 .. note::
 
+    torch 隐式依赖，只有通过显示调用才会强制使用torch
+
+.. note::
+
     后续这里的绘制工具应当进行改进，不应该再使用 :class:`mdict` 了，mdict适合进行数据的写入，
     但是在进行处理的时候没法批量调用，之后写的工具函数应当规避掉这一点，不再使用 **mdict**
 
@@ -39,7 +43,16 @@ from matplotlib.offsetbox import AnnotationBbox, OffsetImage
 from matplotlib.patches import ConnectionPatch
 from pandas import DataFrame
 from PIL import Image, ImageDraw, ImageFont
-from pretty_tools.datastruct import graph_enhance, np_enhance
+
+# * 处理部分需要使用到torch的库
+try:
+    import torch
+except:
+    pass
+try:
+    from pretty_tools.datastruct import graph_enhance, np_enhance
+except:
+    pass
 from pretty_tools.datastruct.bbox_convert import dict_convert_fn
 from pretty_tools.datastruct.cython_bbox import cy_bbox_overlaps_iou
 from pretty_tools.datastruct.multi_index_dict import mdict
@@ -850,8 +863,6 @@ class Pretty_Draw:
 
 
         """
-        import torch
-
         if isinstance(tensor, list):
             from pretty_tools.datastruct import np_enhance
 
@@ -948,7 +959,7 @@ class Pretty_Draw:
         annot=False,
         square=False,
         cmap=None,
-    ) -> tuple[Figure, np.ndarray]:
+    ) -> tuple[Figure, np.ndarray[Axes]]:
         """
         同时绘制多个热图 (基于 seaborn)。并且共享同一个颜色轴，通过调用 ``GridSpec`` 解决了共享颜色轴时创建新轴进而影响了其他轴显示效果的问题
 
@@ -979,6 +990,13 @@ class Pretty_Draw:
             visual_att_img = Visiual_Tools.fig_to_image(fig) # 把图像转换成 np.ndarray
             fig.savefig("tmp/demo.png") #保存图像
 
+        Example
+        -------
+
+        .. code-block:: python
+
+            fig, _ = Pretty_Draw.draw_heatmaps(1, 1, (matrix_iou,), square=True, annot=True)
+            fig.savefig("tmp/matrix_iou.png")
 
         .. image:: http://pb.x-contion.top/wiki/2023_09/15/3_demo.png
             :alt: draw_heatmaps_demo
@@ -1005,15 +1023,22 @@ class Pretty_Draw:
 
         if dpi is None:
             dpi = cls.dpi
+        assert isinstance(nrows, int)
+        assert isinstance(ncols, int)
 
         if nrows == 1:
             tuple_matrix = [tuple_matrix]  # type: ignore
+
+        if figsize is None:
+            figsize = (ncols * 5, nrows * 5)  # * figsize的顺序是 宽高，而不是高宽
+
         assert len(tuple_matrix) == nrows, "传入的可视化矩阵应当是 元组形式，元组的尺寸应当为 (nrows, ncols) "
         assert len(tuple_matrix[0]) == ncols, "传入的可视化矩阵应当是 元组形式，元组的尺寸应当为 (nrows, ncols) "
 
         fig = plt.figure(dpi=dpi, figsize=figsize, constrained_layout=True)  # * 使得各子图之间的距离自动调整
         # fig = plt.figure(dpi=dpi, figsize=figsize)
-        gs = GridSpec(nrows, ncols + 1, width_ratios=[1] * ncols + [0.1], figure=fig)
+        # * 本质上分了两个区域，一个是热图，一个是颜色条，颜色条这里只能放在右边(也可以改)
+        gs = GridSpec(nrows, ncols + 1, width_ratios=[1] * ncols + [0.1], height_ratios=[1] * nrows, figure=fig)
         np_ax = np.zeros((nrows, ncols), dtype=np.object_)
 
         vmin = np.inf
@@ -1022,7 +1047,7 @@ class Pretty_Draw:
             for j in range(ncols):
                 adj = tuple_matrix[i][j]
                 ax = fig.add_subplot(gs[i, j])
-                sns.heatmap(adj, ax=ax, cbar=False, cmap=cmap, annot=annot, square=square)
+                sns.heatmap(adj, ax=ax, cbar=False, cmap=cmap, annot=annot, square=square)  # * 共用颜色条
                 ax.xaxis.set_ticks_position("top")  # * 将x轴的位置设置在顶部
                 if adj.max() > vmax:
                     vmax = adj.max()

@@ -99,6 +99,7 @@ setup(
         "gpuinfo",
         "imagesize",
         "colorlog",
+        "joblib",
         "vispy",
         "imgaug",  # *图像增强库
         "streamlit",  # 自动生成网页的工具
