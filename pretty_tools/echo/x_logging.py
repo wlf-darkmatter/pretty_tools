@@ -6,6 +6,7 @@ import os
 from datetime import datetime
 from logging import Logger
 from pathlib import Path
+from typing import Union
 
 import click
 from rich.logging import RichHandler
@@ -105,18 +106,18 @@ class X_Logging:
         if self.multi_process_mode:
             print(f"启动了多进程模式")
 
-    def add_file_logger(self, dir_log, file_log_level=default_file_log_level, fileError_log_level=default_fileError_log_level):
-        self.path = Path(dir_log).resolve().absolute()
-        os.makedirs(self.path, exist_ok=True)
+    def add_file_logger(self, dir_log: Union[str, Path], file_log_level=default_file_log_level, fileError_log_level=default_fileError_log_level):
+        self.dir_log = Path(dir_log).resolve().absolute()
+        os.makedirs(self.dir_log, exist_ok=True)
 
         handler_File = logging.handlers.TimedRotatingFileHandler(
-            filename=str(self.path.joinpath(self.__now_time + ".log")),
+            filename=str(self.dir_log.joinpath(self.__now_time + ".log")),
             when="H",
             interval=24,
             backupCount=30,
         )
         handler_File_errorlogger = logging.handlers.TimedRotatingFileHandler(
-            filename=str(self.path.joinpath(self.__now_time + "_error.log")),
+            filename=str(self.dir_log.joinpath(self.__now_time + "_error.log")),
             when="H",
             interval=24,
             backupCount=30,

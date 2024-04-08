@@ -1,14 +1,9 @@
-from typing import (Any, Callable, Generator, Generic, Iterable, Optional,
-                    TypeVar)
+from typing import Any, Callable, Generator, Generic, Iterable, Optional, TypeVar
 
-from pretty_tools.echo.echo_column.pretty_column import (
-    Pretty_SpeedColumn_item, Pretty_Text_PercentageColumn,
-    Pretty_TotalAmountColumn)
+from pretty_tools.echo.echo_column.pretty_column import Pretty_SpeedColumn_item, Pretty_Text_PercentageColumn, Pretty_TotalAmountColumn
 from rich import filesize
 from rich.console import Console, Group, RenderableType
-from rich.progress import (BarColumn, Progress, ProgressColumn, SpinnerColumn,
-                           Task, TextColumn, TimeElapsedColumn,
-                           TimeRemainingColumn, track)
+from rich.progress import BarColumn, Progress, ProgressColumn, SpinnerColumn, Task, TextColumn, TimeElapsedColumn, TimeRemainingColumn, track
 from rich.text import Text
 
 T = TypeVar("T")
@@ -208,13 +203,11 @@ class X_Progress(Generic[T]):
         return (
             self.total
             if self.generator is None
-            else self.generator.shape[0]
-            if hasattr(self.generator, "shape")
-            else len(self.generator)
-            if hasattr(self.generator, "__len__")
-            else self.generator.__length_hint__()
-            if hasattr(self.iterable, "__length_hint__")
-            else getattr(self, "total", None)
+            else (
+                self.generator.shape[0]
+                if hasattr(self.generator, "shape")
+                else len(self.generator) if hasattr(self.generator, "__len__") else self.generator.__length_hint__() if hasattr(self.iterable, "__length_hint__") else getattr(self, "total", None)
+            )
         )
 
     def __contains__(self, item):
@@ -297,3 +290,42 @@ class X_Progress(Generic[T]):
 
     def advance(self, step=1):
         X_Progress._echo_plus.update(self.task_id, advance=step)
+
+
+class Safe_Progress(Progress):
+    """
+
+    Example:
+    -------
+
+    with Safe_Progress() as progress:
+        task_dataset = progress.add_task(description=f"Total Eval ({len(dataset.list_camera)} camera)", total=dataset.num_camera)
+        for camera in dataset.list_camera:
+
+            task_camera = progress.add_task(description=f"eval camera: {camera.name}", total=dataset.num_camera)
+            dataloader = Dataloader_Camera(camera)
+            for data_i in dataloader:
+                ...
+                progress.update(task_camera, advance=1)
+            progress.remove_task(task_camera)
+            progress.update(task_dataset, advance=1)
+            ...
+
+
+    """
+
+    def __init__(self, *args, auto_refresh=False, **kwargs):
+        kwargs.setdefault("auto_refresh", auto_refresh)
+        super().__init__(
+            *args,
+            TextColumn("[progress.description]{task.description}"),
+            SpinnerColumn(),
+            BarColumn(),
+            Pretty_Text_PercentageColumn(),
+            Pretty_SpeedColumn_item(),
+            TimeElapsedColumn(),
+            TextColumn("ETA:"),
+            TimeRemainingColumn(),
+            Pretty_TotalAmountColumn(),
+            **kwargs,
+        )
