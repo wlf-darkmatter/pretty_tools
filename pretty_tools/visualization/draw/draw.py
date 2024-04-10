@@ -28,7 +28,7 @@ import math
 import sys
 from copy import deepcopy
 from functools import partial
-from typing import Any, Dict, List, Literal, Optional, Sequence, Tuple, TypedDict, Union, Unpack
+from typing import Any, Unpack, List, Literal, Optional, Sequence, Tuple, TypedDict, Union, Unpack
 
 import cv2
 import matplotlib
@@ -114,6 +114,7 @@ class Visiual_Tools:
 
         ? 20240410 修改, 删去了 np_cumsum, 改而使用 aux_linx_x, aux_linx_y
         """
+
         if Oij is None:
             Oij = (0, 0)
         the_ax.xaxis.set_ticks_position("top")  # * 将x轴的位置设置在顶部
@@ -125,13 +126,18 @@ class Visiual_Tools:
         the_ax.grid(axis="both", which="both", linewidth=0.5, zorder=-10)  # 绘制网格，设定网格线的宽度
         the_ax.margins(0.05)  # * 5% 的空白
         the_ax.invert_yaxis()  # * y轴反向
+
         if aux_linx_x is not None:
+            if aux_linx_x[-1] == shape[1]:
+                aux_linx_x = aux_linx_x[:-1]
             for pox_x in aux_linx_x:
-                the_ax.axvline(x=pox_x, dashes=[4, 4], zorder=-5)  # * 绘制垂直线
+                the_ax.axvline(x=pox_x-0.5, dashes=[4, 4], zorder=-5)  # * 绘制垂直线
 
         if aux_linx_y is not None:
+            if aux_linx_y[-1] == shape[1]:
+                aux_linx_y = aux_linx_y[:-1]
             for pox_y in aux_linx_y:
-                the_ax.axhline(y=pox_y, dashes=[4, 4], zorder=-5)  # * 绘制水平线
+                the_ax.axhline(y=pox_y-0.5, dashes=[4, 4], zorder=-5)  # * 绘制水平线
 
         the_ax.axis("equal")
 
@@ -174,6 +180,27 @@ class Dict_Kwargs_GridSpec(TypedDict):
     hspace: float
     width_ratios: Sequence[float]
     height_ratios: Sequence[float]
+
+
+class Dict_Kwargs_scatter(TypedDict):
+    """
+    Dict_Kwargs_scatter 棋盘格绘图参数
+
+
+    """
+
+    aux_linx_X: np.ndarray | Sequence[int]  # *竖直的辅助线的值. 输入的应当是 x 轴的坐标
+    aux_linx_y: np.ndarray | Sequence[int]  # *水平的辅助线的值，输入的应当是 y 轴的坐标
+    shape: tuple[int, int]  # *如果输入的是 稀疏矩阵 或 列表，这个 shape 则建议输入进来. 默认使用 ``adj`` 的尺寸
+    scatter_sizes: tuple[int, int]  # *散点图的大小范围
+    label_x: str  # *x轴的标签，默认为"$j$"
+    label_y: str  # *y轴的标签，默认为"$i$"
+    Oij: tuple[int, int]  # *左上角偏移原点的位置，默认为 Oij=(x=0, y=0), x 表示左右，y 表示上下
+    dpi: int  # *dpi，默认为200
+    size_norm: tuple[int, int]
+    hide_uptri: bool  # *是否遮挡上面的三角，默认为 False
+    hide_downtri: bool  # *是否遮挡下面的三角，默认为 False
+    hide_diag: bool  # *是否遮挡 对角线分块矩阵，默认为 False
 
 
 class Pretty_Draw:
@@ -764,8 +791,10 @@ class Pretty_Draw:
         values=None,
         aux_linx_x: Optional[np.ndarray] = None,
         aux_linx_y: Optional[np.ndarray] = None,
-        shape: Optional[Union[tuple, list]] = None,
-        Oij: Optional[Union[np.ndarray, Sequence[int]]] = None,
+        scatter_sizes=(5, 80),
+        shape: Sequence[int] = None,
+        size_norm: Tuple[int, int] = (0, 1),
+        **kwargs: Unpack[Dict_Kwargs_scatter],
     ):
         """
         只绘制一张图，用以调试大矩阵中的邻接关系
@@ -776,8 +805,8 @@ class Pretty_Draw:
 
             aux_linx_x (np.ndarray, torch.Tensor, optional):
             aux_linx_y (np.ndarray, torch.Tensor, optional):
-            np_cumsum (np.ndarray, torch.Tensor, optional): [description]. Defaults to None. 如果设定了值，则第一个元素必须为`0`
-            Oij: 左上角坐标偏移量
+            shape (tuple or list, optional): 如果输入的是 稀疏矩阵 或 列表，这个 shape 则建议输入进来
+            scatter_sizes: 散点图的大小范围
 
         .. note::
             如果输入的不是 :class:`np.ndarray` 类型，则会将其判断为 :class:`torch.Tensor` 类型，并将其转化为 :class:`np.ndarray` 类型
@@ -793,19 +822,64 @@ class Pretty_Draw:
         aux_linx_y = convert_to_numpy(aux_linx_y)
 
         if shape is None:
-            shape = [edge_index[0].max() + 1, edge_index[1].max() + 1]
+            shape = (edge_index[0].max() + 1, edge_index[1].max() + 1)
+
+        label_x = kwargs.get("label_x", "$j$")
+        label_y = kwargs.get("label_y", "$i$")
+        Oij = kwargs.get("Oij", None)  # *左上角偏移原点的位置，默认为 Oij=(x=0, y=0), x 表示左右，y 表示上下
+        dpi = kwargs.get("dpi", Pretty_Draw.dpi)
 
         assert len(edge_index) == 2
-        df_edge = DataFrame(edge_index.T, columns=["$i$", "$j$"])
+        df_edge = DataFrame(edge_index.T, columns=[label_x, label_y])
         if values is not None:
             df_edge["value"] = values
         else:
             df_edge["value"] = 1  # * 全部设置默认的 0.5 的大小
 
-        fig = plt.figure(figsize=(shape[1] / 3 + 1, shape[0] / 3), dpi=Pretty_Draw.dpi)
+        fig = plt.figure(figsize=(shape[1] / 3 + 1, shape[0] / 3), dpi=dpi)
 
-        scatter_sizes = (5, 80)
-        ax_edge = sns.scatterplot(data=df_edge, x="$j$", y="$i$", size="value", hue="value", ax=fig.gca(), sizes=scatter_sizes, size_norm=(0, 1), zorder=2)
+        # ************* 遮挡修正 *************
+        hide_uptri = kwargs.get("hide_uptri", False)
+        hide_downtri = kwargs.get("hide_downtri", False)
+        hide_diag = kwargs.get("hide_diag", False)
+        if hide_uptri:
+            df_edge = df_edge[df_edge[label_x] >= df_edge[label_y]]
+        if hide_downtri:
+            df_edge = df_edge[df_edge[label_x] <= df_edge[label_y]]
+
+        if hide_diag:
+            assert (aux_linx_x is not None) and (aux_linx_y is not None), "没有辅助线分不清哪个是对角线矩阵"
+            block_ptr_x = aux_linx_x.tolist()
+            block_ptr_y = aux_linx_y.tolist()
+            if aux_linx_x[-1] != shape[1]:
+                block_ptr_x.append(shape[1])
+            if aux_linx_y[-1] != shape[0]:
+                block_ptr_y.append(shape[0])
+            last_x, last_y = 0, 0
+            for block_k in range(min(len(block_ptr_x), len(block_ptr_y))):
+                max_x = block_ptr_x[block_k]
+                max_y = block_ptr_y[block_k]
+                pos_x = df_edge[label_x].to_numpy()
+                pos_y = df_edge[label_y].to_numpy()
+                flag_x = np.logical_and(last_x <= pos_x, pos_x < max_x)
+                flag_y = np.logical_and(last_y <= pos_y, pos_y < max_y)
+                flag = np.logical_and(flag_x, flag_y)
+                df_edge = df_edge[~flag]
+                last_x, last_y = max_x, max_y
+
+        # ************* 画图 *************
+        # * 如果绘制的最后一行最后一列正好就是矩阵的边界，则不绘制，但是如果调用了 hide_diag
+        ax_edge = sns.scatterplot(
+            data=df_edge,
+            x=label_x,
+            y=label_y,
+            size="value",
+            hue="value",
+            ax=fig.gca(),
+            sizes=scatter_sizes,
+            size_norm=size_norm,
+            zorder=2,
+        )
         Visiual_Tools._plot_block_line(
             ax_edge,
             shape,
@@ -814,7 +888,9 @@ class Pretty_Draw:
             Oij=Oij,
         )
         fig.subplots_adjust(right=0.8)
+        # * 其他修正
 
+        # * 画图的设置
         sns.move_legend(ax_edge, "upper left", labelspacing=shape[1] / 20, ncol=1, frameon=True, bbox_to_anchor=(1, 1), borderaxespad=0)
         ax_edge.spines["right"].set_visible(False)
         ax_edge.spines["top"].set_visible(False)
@@ -826,14 +902,12 @@ class Pretty_Draw:
     def draw_adj(
         cls,
         adj,
-        shape: Optional[Union[tuple, list]] = None,
-        aux_linx_x: Optional[np.ndarray] = None,
-        aux_linx_y: Optional[np.ndarray] = None,
-        len_graph: Optional[Union[np.ndarray, list[int]]] = None,
+        shape: Sequence[int] = None,
+        **kwargs: Unpack[Dict_Kwargs_scatter],
     ):
         """
         使用细节请看 :func:`Pretty_Draw.draw_edge_index`
-
+        只适用于转换，将数据进行处理后，依旧调用的是 draw_edge_index
         Example:
 
         .. image:: http://pb.x-contion.top/wiki/2023_08/15/3_vis_adj_sum.png
@@ -843,12 +917,8 @@ class Pretty_Draw:
         Args:
             adj : The adjacency matrix. 可以是列表，这样会作为主对角线上的方阵进行处理
             shape (tuple or list, optional):
-                输入的稀疏矩阵或 numpy 数组的形状. 默认使用 ``adj`` 的尺寸
+                如果输入的是 稀疏矩阵 或 列表，这个 shape 则建议输入进来. 默认使用 ``adj`` 的尺寸
 
-            aux_linx_x (np.ndarray):
-                竖直的辅助线的值. 输入的应当是 x 轴的坐标
-            aux_linx_y (np.ndarray):
-                水平的辅助线的值，输入的应当是 y 轴的坐标
         """
         if isinstance(adj, list):
             # * 如果是列表，必然通过稀疏矩阵的方式进行可视化
@@ -858,7 +928,7 @@ class Pretty_Draw:
 
         elif isinstance(adj, (sparse.sparray, sparse.spmatrix)):
             adj = convert_to_numpy(adj, sparse_shape=shape)
-            adj = adj.tocsr()  # type: ignore
+            adj = adj.tocsr()
             edge_index = np.stack(adj.nonzero())
             values = np.array(adj[*edge_index]).reshape(-1)
         elif isinstance(adj, np.ndarray):
@@ -876,9 +946,8 @@ class Pretty_Draw:
         fig = cls.draw_edge_index(
             edge_index,
             values,
-            aux_linx_x=aux_linx_x,
-            aux_linx_y=aux_linx_y,
             shape=shape,
+            **kwargs,
         )
         return fig
 

@@ -108,3 +108,15 @@ setup(
     # py_modules=['dataset', 'message', 'multi_works', 'progress', 'video', 'visualization', 'x_logger'],
     extra_compile_args=["-pthread"],  # 启动多线程编译
 )
+
+""" CPU PyG
+pip install torch_geometric
+pip install pyg_lib torch_scatter torch_sparse torch_cluster torch_spline_conv -f https://data.pyg.org/whl/torch-2.2.0+cpu.html
+
+"""
+
+"""
+pip install jupyter notebook blackcellmagic
+
+每一个分块都使用 %load_ext blackcellmagic 或者 %%black
+"""
