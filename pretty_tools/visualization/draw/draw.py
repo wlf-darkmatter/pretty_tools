@@ -22,12 +22,13 @@
 """
 
 import copy
+import functools
 import itertools
 import math
 import sys
 from copy import deepcopy
 from functools import partial
-from typing import Any, Dict, List, Literal, Optional, Sequence, Tuple, Union, TypedDict, Unpack
+from typing import Any, Dict, List, Literal, Optional, Sequence, Tuple, TypedDict, Union, Unpack
 
 import cv2
 import matplotlib
@@ -37,15 +38,13 @@ import numpy as np
 import seaborn as sns
 from matplotlib import font_manager as fm
 from matplotlib import pyplot as plt
-from matplotlib.pyplot import Figure
 from matplotlib.axes import Axes
 from matplotlib.gridspec import GridSpec
 from matplotlib.offsetbox import AnnotationBbox, OffsetImage
 from matplotlib.patches import ConnectionPatch
+from matplotlib.pyplot import Figure
 from pandas import DataFrame
 from PIL import Image, ImageDraw, ImageFont
-import itertools
-import functools
 
 # * 处理部分需要使用到torch的库
 try:
@@ -56,6 +55,8 @@ try:
     from pretty_tools.datastruct import graph_enhance, np_enhance
 except:
     pass
+from scipy import sparse
+
 from pretty_tools.datastruct.bbox_convert import dict_convert_fn
 from pretty_tools.datastruct.cython_bbox import cy_bbox_overlaps_iou
 from pretty_tools.datastruct.multi_index_dict import mdict
@@ -63,7 +64,6 @@ from pretty_tools.datastruct.np_enhance import convert_to_numpy
 from pretty_tools.datastruct.numpy_bbox import bbox_no_overlaps_area
 from pretty_tools.resources import path_font_arial, path_font_time_new_roman
 from pretty_tools.solver.match_utils import match_result_check
-from scipy import sparse
 
 from . import matplotlib_misc
 
@@ -106,11 +106,13 @@ class Visiual_Tools:
         return image
 
     @classmethod
-    def _plot_block_line(cls, the_ax, shape, np_cumsum, Oij=None):
+    def _plot_block_line(cls, the_ax, shape, aux_linx_x=None, aux_linx_y=None, Oij=None):
         """
         调节多块网格的显示
 
         shape[0] 是行数，shape[1] 是列数
+
+        ? 20240410 修改, 删去了 np_cumsum, 改而使用 aux_linx_x, aux_linx_y
         """
         if Oij is None:
             Oij = (0, 0)
@@ -123,11 +125,14 @@ class Visiual_Tools:
         the_ax.grid(axis="both", which="both", linewidth=0.5, zorder=-10)  # 绘制网格，设定网格线的宽度
         the_ax.margins(0.05)  # * 5% 的空白
         the_ax.invert_yaxis()  # * y轴反向
-        for block_interval in np_cumsum[1:-1]:  # * 这里要反向偏移回来，因为图窗只认 原点附近的地方
-            block_interval -= 0.5
-            the_ax.axhline(y=block_interval, dashes=[4, 4], zorder=-5)  # * 绘制水平线
-            the_ax.axvline(x=block_interval, dashes=[4, 4], zorder=-5)  # * 绘制垂直线
-        pass
+        if aux_linx_x is not None:
+            for pox_x in aux_linx_x:
+                the_ax.axvline(x=pox_x, dashes=[4, 4], zorder=-5)  # * 绘制垂直线
+
+        if aux_linx_y is not None:
+            for pox_y in aux_linx_y:
+                the_ax.axhline(y=pox_y, dashes=[4, 4], zorder=-5)  # * 绘制水平线
+
         the_ax.axis("equal")
 
     @staticmethod
@@ -757,8 +762,8 @@ class Pretty_Draw:
         cls,
         edge_index,
         values=None,
-        np_cumsum: Optional[np.ndarray] = None,
-        len_graph: Optional[Union[np.ndarray, list[int]]] = None,
+        aux_linx_x: Optional[np.ndarray] = None,
+        aux_linx_y: Optional[np.ndarray] = None,
         shape: Optional[Union[tuple, list]] = None,
         Oij: Optional[Union[np.ndarray, Sequence[int]]] = None,
     ):
@@ -768,6 +773,9 @@ class Pretty_Draw:
         Args:
             edge_index : [description] 传入的邻接关系， **shape** 为 :code:`(2, edge_nums)`
             values (np.ndarray, torch.Tensor, optional): 值，应当和edge_index的输入顺序一致，可有可无，关系到邻接矩阵中显示的大小，如果为无，则所有标记大小一致
+
+            aux_linx_x (np.ndarray, torch.Tensor, optional):
+            aux_linx_y (np.ndarray, torch.Tensor, optional):
             np_cumsum (np.ndarray, torch.Tensor, optional): [description]. Defaults to None. 如果设定了值，则第一个元素必须为`0`
             Oij: 左上角坐标偏移量
 
@@ -781,15 +789,9 @@ class Pretty_Draw:
 
         edge_index = convert_to_numpy(edge_index)
         values = convert_to_numpy(values)
-        np_cumsum = convert_to_numpy(np_cumsum)
-        len_graph = convert_to_numpy(len_graph)
-        if np_cumsum is None:
-            np_cumsum = np.array([0, int(edge_index.max()) + 1])
-        if len_graph is not None:
-            if isinstance(len_graph, np.ndarray):
-                np_cumsum = np.cumsum([0] + len_graph.tolist())
-            else:
-                np_cumsum = np.cumsum([0] + len_graph)
+        aux_linx_x = convert_to_numpy(aux_linx_x)
+        aux_linx_y = convert_to_numpy(aux_linx_y)
+
         if shape is None:
             shape = [edge_index[0].max() + 1, edge_index[1].max() + 1]
 
@@ -804,7 +806,13 @@ class Pretty_Draw:
 
         scatter_sizes = (5, 80)
         ax_edge = sns.scatterplot(data=df_edge, x="$j$", y="$i$", size="value", hue="value", ax=fig.gca(), sizes=scatter_sizes, size_norm=(0, 1), zorder=2)
-        Visiual_Tools._plot_block_line(ax_edge, shape, np_cumsum, Oij=Oij)
+        Visiual_Tools._plot_block_line(
+            ax_edge,
+            shape,
+            aux_linx_x=aux_linx_x,
+            aux_linx_y=aux_linx_y,
+            Oij=Oij,
+        )
         fig.subplots_adjust(right=0.8)
 
         sns.move_legend(ax_edge, "upper left", labelspacing=shape[1] / 20, ncol=1, frameon=True, bbox_to_anchor=(1, 1), borderaxespad=0)
@@ -819,7 +827,8 @@ class Pretty_Draw:
         cls,
         adj,
         shape: Optional[Union[tuple, list]] = None,
-        np_cumsum: Optional[np.ndarray] = None,
+        aux_linx_x: Optional[np.ndarray] = None,
+        aux_linx_y: Optional[np.ndarray] = None,
         len_graph: Optional[Union[np.ndarray, list[int]]] = None,
     ):
         """
@@ -835,8 +844,11 @@ class Pretty_Draw:
             adj : The adjacency matrix. 可以是列表，这样会作为主对角线上的方阵进行处理
             shape (tuple or list, optional):
                 输入的稀疏矩阵或 numpy 数组的形状. 默认使用 ``adj`` 的尺寸
-            np_cumsum (np.ndarray):
-                辅助绘线的值.
+
+            aux_linx_x (np.ndarray):
+                竖直的辅助线的值. 输入的应当是 x 轴的坐标
+            aux_linx_y (np.ndarray):
+                水平的辅助线的值，输入的应当是 y 轴的坐标
         """
         if isinstance(adj, list):
             # * 如果是列表，必然通过稀疏矩阵的方式进行可视化
@@ -861,7 +873,13 @@ class Pretty_Draw:
         if shape is None:
             shape = adj.shape  # type: ignore
 
-        fig = cls.draw_edge_index(edge_index, values, np_cumsum, len_graph, shape=shape)
+        fig = cls.draw_edge_index(
+            edge_index,
+            values,
+            aux_linx_x=aux_linx_x,
+            aux_linx_y=aux_linx_y,
+            shape=shape,
+        )
         return fig
 
     @classmethod

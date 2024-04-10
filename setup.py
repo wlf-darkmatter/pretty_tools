@@ -98,6 +98,7 @@ setup(
         "rich[jupyter]",
         "gpuinfo",
         "imagesize",
+        "iteration_utilities",
         "colorlog",
         "joblib",
         "vispy",

@@ -184,8 +184,8 @@ def get_block_pair(y_id: Tensor) -> Tensor:
 
 class Batch_Multi_Graph:
     """
-    .. note::
-        **Stable** 模块，逐步吸收到 XBGraph 中
+
+    #todo 20240410 逐渐废弃, XBGraph 也逐渐废弃
 
     多个 **单相机子图** 合并成一个 较大的图，成为 **多相机图**，
     但还要设计成一个可组合的形式，用树的形式可以更好地理解这个数据的结构
@@ -1069,3 +1069,50 @@ def merge_affinity(mdict_aff: mdict[tuple[int, int], np.ndarray]) -> tuple[np.nd
 
     np_merge = np.block(list_aff)
     return np_merge, np_len
+
+
+from typing import Optional, Union, Tuple, Sequence
+
+
+class MultiGraph_Utils:
+
+    @staticmethod
+    def get_gt_match_edge_index(
+        y: Union[np.ndarray, torch.Tensor],
+        graph_ptr: np.ndarray,
+    ) -> np.ndarray:
+        """
+        获取当前 Block 的真值匹配
+        Args:
+            y (Union[np.ndarray, torch.Tensor]): 真值
+            graph_ptr (np.ndarray): 分块的索引，
+
+        .. note::
+            注意， ``graph_ptr`` 可以有偏移也可以没有偏移量，如果加入的 ``graph_ptr`` 有偏移量，则输出也是有偏移量的，如果加入的是没有偏移量的，则输出也没有偏移量
+
+        """
+        import itertools
+
+        if isinstance(y, torch.Tensor):
+            y = y.detach().cpu().numpy()
+        new_y = np.stack([np.arange(len(y)), y])
+        # * 将真值 id 放到一起，进行排序
+        sort_new_y = new_y[:, np.lexsort((np.arange(len(y)), y))]  # [n, 2] , 第一个元素是 id，第二个元素是 id 的索引
+
+        y_cluster = sort_new_y[1]
+        ptr = np.where(y_cluster[:-1] != y_cluster[1:])[0] + 1
+        ptr = np.insert(ptr, 0, 0)
+        ptr = np.insert(ptr, len(ptr), len(y_cluster))
+
+        list_comb = []
+        for i, n in enumerate(np.diff(ptr)):
+            if n != 1:
+                np_same_id = sort_new_y[0, ptr[i] : ptr[i + 1]]
+                # tmp_a, tmp_b = ptr[i], ptr[i + 1]
+                # print(f"sort_new_y[{tmp_a}:{tmp_b}] = {sort_new_y[0,tmp_a:tmp_b]}")
+                list_comb += [*itertools.combinations(np_same_id, 2)]
+            pass
+        match_tri_u = np.array(list_comb).T + graph_ptr[0]
+        # from pretty_tools.visualization.draw import Pretty_Draw, Visiual_Tools  #? debug
+        # vis_block_gt = Visiual_Tools.fig_to_image(Pretty_Draw.draw_edge_index(match_tri_u, shape=(len(y), len(y)), np_cumsum=block_ptr, Oij=(block_ptr[0], block_ptr[0])))  #? debug
+        return match_tri_u
