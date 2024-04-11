@@ -117,27 +117,25 @@ class Visiual_Tools:
 
         if Oij is None:
             Oij = (0, 0)
-        the_ax.xaxis.set_ticks_position("top")  # * 将x轴的位置设置在顶部
-        the_ax.tick_params(axis="both")
+
         the_ax.set_xlim([Oij[1] - 0.5, Oij[1] + shape[1] - 0.5])
         the_ax.set_ylim([Oij[0] - 0.5, Oij[0] + shape[0] - 0.5])
         the_ax.set_xticks(np.arange(Oij[1], Oij[1] + shape[1]))  # 绘制网格，添加额外的边界线
         the_ax.set_yticks(np.arange(Oij[0], Oij[0] + shape[0]))  # 绘制网格，添加额外的边界线
         the_ax.grid(axis="both", which="both", linewidth=0.5, zorder=-10)  # 绘制网格，设定网格线的宽度
         the_ax.margins(0.05)  # * 5% 的空白
-        the_ax.invert_yaxis()  # * y轴反向
 
         if aux_linx_x is not None:
             if aux_linx_x[-1] == shape[1]:
                 aux_linx_x = aux_linx_x[:-1]
             for pox_x in aux_linx_x:
-                the_ax.axvline(x=pox_x-0.5, dashes=[4, 4], zorder=-5)  # * 绘制垂直线
+                the_ax.axvline(x=pox_x - 0.5, dashes=[4, 4], zorder=-5)  # * 绘制垂直线
 
         if aux_linx_y is not None:
             if aux_linx_y[-1] == shape[1]:
                 aux_linx_y = aux_linx_y[:-1]
             for pox_y in aux_linx_y:
-                the_ax.axhline(y=pox_y-0.5, dashes=[4, 4], zorder=-5)  # * 绘制水平线
+                the_ax.axhline(y=pox_y - 0.5, dashes=[4, 4], zorder=-5)  # * 绘制水平线
 
         the_ax.axis("equal")
 
@@ -201,6 +199,8 @@ class Dict_Kwargs_scatter(TypedDict):
     hide_uptri: bool  # *是否遮挡上面的三角，默认为 False
     hide_downtri: bool  # *是否遮挡下面的三角，默认为 False
     hide_diag: bool  # *是否遮挡 对角线分块矩阵，默认为 False
+    mid_label_x: Sequence[str]  # * 标记在每一个 aux_linx_y 上的标签
+    mid_label_y: Sequence[str]  # * 标记在每一个 aux_linx_y 上的标签
 
 
 class Pretty_Draw:
@@ -533,6 +533,9 @@ class Pretty_Draw:
         sns.move_legend(ax, "upper left", labelspacing=sum_node / 20, ncol=1, frameon=True, bbox_to_anchor=(1, 1), borderaxespad=0)
 
         Visiual_Tools._plot_block_line(ax, merge_aff.shape, np_cumsum)
+        ax.xaxis.set_ticks_position("top")  # * 将x轴的位置设置在顶部
+        ax.tick_params(axis="both")
+        ax.invert_yaxis()  # * y轴反向
         # * 绘制度矩阵
         if dict_edge is not None:
             combine_list_edge = [v + np_cumsum[k] for k, v in dict_edge.items()]
@@ -567,7 +570,9 @@ class Pretty_Draw:
             curt_fig += 1
             ax_result = axes[curt_fig]
             Visiual_Tools._plot_block_line(ax_result, merge_aff.shape, np_cumsum)
-
+            ax_result.xaxis.set_ticks_position("top")  # * 将x轴的位置设置在顶部
+            ax_result.tick_params(axis="both")
+            ax_result.invert_yaxis()  # * y轴反向
             if pair_gt_coo is not None:
                 assert dict_gt is not None
                 for index, gt_id in dict_gt.items():
@@ -626,6 +631,9 @@ class Pretty_Draw:
                 ax_dev.scatter(edge_ij_single.T.col, edge_ij_single.T.row, marker=r"$e$", c="blue", s=50, zorder=3)  # * 画的小一点
 
             Visiual_Tools._plot_block_line(ax_dev, merge_aff.shape, np_cumsum)
+            ax_dev.xaxis.set_ticks_position("top")  # * 将x轴的位置设置在顶部
+            ax_dev.tick_params(axis="both")
+            ax_dev.invert_yaxis()  # * y轴反向
             sns.move_legend(ax_dev, "upper left", labelspacing=sum_node / 20, ncol=1, frameon=True, bbox_to_anchor=(1, 1), borderaxespad=0)
 
         sns.despine(fig=fig, left=True, bottom=True)  # * 去掉左边和下边的边框
@@ -838,10 +846,25 @@ class Pretty_Draw:
 
         fig = plt.figure(figsize=(shape[1] / 3 + 1, shape[0] / 3), dpi=dpi)
 
-        # ************* 遮挡修正 *************
         hide_uptri = kwargs.get("hide_uptri", False)
         hide_downtri = kwargs.get("hide_downtri", False)
         hide_diag = kwargs.get("hide_diag", False)
+        mid_label_x = kwargs.get("mid_label_x", None)
+        mid_label_y = kwargs.get("mid_label_y", None)
+
+        if hide_diag or mid_label_x:
+            assert aux_linx_x is not None, "没有辅助线分不清哪个是对角线矩阵，也画不出分段中间标签"
+            block_ptr_x = aux_linx_x.tolist()
+            if aux_linx_x[-1] != shape[1]:
+                block_ptr_x.append(shape[1])
+
+        if hide_diag or mid_label_y:
+            assert aux_linx_y is not None, "没有辅助线分不清哪个是对角线矩阵，也画不出分段中间标签"
+            block_ptr_y = aux_linx_y.tolist()
+            if aux_linx_y[-1] != shape[0]:
+                block_ptr_y.append(shape[0])
+
+        # ************* 遮挡修正 *************
         if hide_uptri:
             df_edge = df_edge[df_edge[label_x] >= df_edge[label_y]]
         if hide_downtri:
@@ -849,12 +872,6 @@ class Pretty_Draw:
 
         if hide_diag:
             assert (aux_linx_x is not None) and (aux_linx_y is not None), "没有辅助线分不清哪个是对角线矩阵"
-            block_ptr_x = aux_linx_x.tolist()
-            block_ptr_y = aux_linx_y.tolist()
-            if aux_linx_x[-1] != shape[1]:
-                block_ptr_x.append(shape[1])
-            if aux_linx_y[-1] != shape[0]:
-                block_ptr_y.append(shape[0])
             last_x, last_y = 0, 0
             for block_k in range(min(len(block_ptr_x), len(block_ptr_y))):
                 max_x = block_ptr_x[block_k]
@@ -887,15 +904,59 @@ class Pretty_Draw:
             aux_linx_y=aux_linx_y,
             Oij=Oij,
         )
-        fig.subplots_adjust(right=0.8)
-        # * 其他修正
+        ax_edge.invert_yaxis()  # * y轴反向
+        ax_edge.xaxis.set_ticks_position("top")  # * 将x轴的位置设置在顶部
+        ax_edge.tick_params(axis="both")
+        # ************* 副标签 修正 比如对于分块图像，存放相机名称 *************
+        if mid_label_x or mid_label_y:
+            ax2 = ax_edge.twinx()
+            original_xticks = ax_edge.get_xticks()
+            original_xticklabels = ax_edge.get_xticklabels()
 
+            ax2: Axes = ax_edge._make_twin_axes(sharex=ax_edge)
+            # ax2.set_autoscalex_on(ax_edge.get_autoscalex_on())
+            ax2.patch.set_visible(False)
+            ax2.spines["right"].set_visible(False)
+            ax2.spines["top"].set_visible(False)
+            ax2.spines["bottom"].set_visible(False)
+            ax2.spines["left"].set_visible(False)
+            ax2.xaxis.set_visible(False)
+            ax2.yaxis.set_visible(False)
+            if mid_label_x:
+                # ax2.xaxis.set_visible(True)
+                # ax2.xaxis.tick_bottom()
+                # mid_pos_x = (np.array([0] + block_ptr_x[:-1]) + block_ptr_x) / 2
+                # ax2.set_xticks(mid_pos_x)
+                # ax2.set_xticklabels(mid_label_x)
+                # # 恢复原始坐标轴的x轴标签
+                # ax_edge.set_xticks(original_xticks)
+                # ax_edge.set_xticklabels(original_xticklabels)
+                pass
+            else:
+                pass
+
+            if mid_label_y:
+                ax2.invert_yaxis()  # * y轴反向
+                ax2.yaxis.set_visible(True)
+                ax2.yaxis.tick_right()
+                mid_pos_y = (np.array([0] + block_ptr_y[:-1]) + block_ptr_y) / 2
+                ax2.set_yticks(mid_pos_y)
+                ax2.set_yticklabels(mid_label_y)
+            else:
+                pass
+
+        # * 其他修正
+        fig.subplots_adjust(right=0.8)
+        ax_edge.xaxis.set_label_position("top")
+        ax_edge.yaxis.set_label_position("left")
         # * 画图的设置
-        sns.move_legend(ax_edge, "upper left", labelspacing=shape[1] / 20, ncol=1, frameon=True, bbox_to_anchor=(1, 1), borderaxespad=0)
+        # * frameon 图例的一个小灰盒子背景，图例放到左边
+        sns.move_legend(ax_edge, "upper left", labelspacing=shape[1] / 20, ncol=1, frameon=True, bbox_to_anchor=(1, 1), borderaxespad=5)
         ax_edge.spines["right"].set_visible(False)
         ax_edge.spines["top"].set_visible(False)
         ax_edge.spines["bottom"].set_visible(False)
         ax_edge.spines["left"].set_visible(False)
+
         return fig
 
     @classmethod
