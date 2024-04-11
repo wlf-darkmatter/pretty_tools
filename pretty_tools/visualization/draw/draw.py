@@ -190,17 +190,19 @@ class Dict_Kwargs_scatter(TypedDict):
     aux_linx_X: np.ndarray | Sequence[int]  # *竖直的辅助线的值. 输入的应当是 x 轴的坐标
     aux_linx_y: np.ndarray | Sequence[int]  # *水平的辅助线的值，输入的应当是 y 轴的坐标
     shape: tuple[int, int]  # *如果输入的是 稀疏矩阵 或 列表，这个 shape 则建议输入进来. 默认使用 ``adj`` 的尺寸
-    scatter_sizes: tuple[int, int]  # *散点图的大小范围
+    scatter_sizes: tuple[int, int]  # *散点图的大小范围 (5, 80)
     label_x: str  # *x轴的标签，默认为"$j$"
     label_y: str  # *y轴的标签，默认为"$i$"
     Oij: tuple[int, int]  # *左上角偏移原点的位置，默认为 Oij=(x=0, y=0), x 表示左右，y 表示上下
     dpi: int  # *dpi，默认为200
     size_norm: tuple[int, int]
-    hide_uptri: bool  # *是否遮挡上面的三角，默认为 False
-    hide_downtri: bool  # *是否遮挡下面的三角，默认为 False
+    hide_triu: bool  # *是否遮挡上面的三角，默认为 False
+    hide_tril: bool  # *是否遮挡下面的三角，默认为 False
     hide_diag: bool  # *是否遮挡 对角线分块矩阵，默认为 False
     mid_label_x: Sequence[str]  # * 标记在每一个 aux_linx_y 上的标签
     mid_label_y: Sequence[str]  # * 标记在每一个 aux_linx_y 上的标签
+
+    cm_aff: str  # *颜色条的名称，默认为 "inferno_r"
 
 
 class Pretty_Draw:
@@ -529,7 +531,17 @@ class Pretty_Draw:
         ax = axes[0] if n_fig != 1 else axes
         cm_aff = matplotlib.colormaps["plasma_r"]  # type: ignore  # tab20b_r # tab20c_r
         scatter_sizes = (5, max_shape_size * 0.5)
-        ax = sns.scatterplot(data=df, x="x", y="y", size="value", hue="value", ax=ax, palette=cm_aff, sizes=scatter_sizes, zorder=2)
+        ax = sns.scatterplot(
+            data=df,
+            x="x",
+            y="y",
+            size="value",
+            hue="value",
+            ax=ax,
+            palette=cm_aff,
+            sizes=scatter_sizes,
+            zorder=2,
+        )
         sns.move_legend(ax, "upper left", labelspacing=sum_node / 20, ncol=1, frameon=True, bbox_to_anchor=(1, 1), borderaxespad=0)
 
         Visiual_Tools._plot_block_line(ax, merge_aff.shape, np_cumsum)
@@ -611,7 +623,18 @@ class Pretty_Draw:
 
             df_dev = DataFrame(np.array(list_xy), columns=["x", "y"])
             df_dev["value"] = np.array(list_aff)
-            ax_dev = sns.scatterplot(data=df_dev, x="x", y="y", size="value", hue="value", ax=ax_dev, palette=cm_aff, sizes=scatter_sizes, size_norm=(0, 1), zorder=2)
+            ax_dev = sns.scatterplot(
+                data=df_dev,
+                x="x",
+                y="y",
+                size="value",
+                hue="value",
+                ax=ax_dev,
+                palette=cm_aff,
+                sizes=scatter_sizes,
+                size_norm=(0, 1),
+                zorder=2,
+            )
             #! 如果有gt，则在 dev 图的 中心线 上绘制全局 id 号
             if mdict_pair_gt is not None:
                 assert dict_gt is not None
@@ -831,14 +854,16 @@ class Pretty_Draw:
 
         if shape is None:
             shape = (edge_index[0].max() + 1, edge_index[1].max() + 1)
-
+        # ! 图像中的 x 和 y 与 i 和 j 是相反的，所以这里要进行转换
+        cm_aff = kwargs.get("cm_aff", matplotlib.colormaps["inferno_r"])
         label_x = kwargs.get("label_x", "$j$")
         label_y = kwargs.get("label_y", "$i$")
         Oij = kwargs.get("Oij", None)  # *左上角偏移原点的位置，默认为 Oij=(x=0, y=0), x 表示左右，y 表示上下
         dpi = kwargs.get("dpi", Pretty_Draw.dpi)
 
+        # ! edge_index 也要换，因为第一行是 i，应当放在y上，所以这里要进行转换
         assert len(edge_index) == 2
-        df_edge = DataFrame(edge_index.T, columns=[label_x, label_y])
+        df_edge = DataFrame(edge_index[::-1].T, columns=[label_x, label_y])
         if values is not None:
             df_edge["value"] = values
         else:
@@ -846,8 +871,8 @@ class Pretty_Draw:
 
         fig = plt.figure(figsize=(shape[1] / 3 + 1, shape[0] / 3), dpi=dpi)
 
-        hide_uptri = kwargs.get("hide_uptri", False)
-        hide_downtri = kwargs.get("hide_downtri", False)
+        hide_triu = kwargs.get("hide_triu", False)
+        hide_tril = kwargs.get("hide_tril", False)
         hide_diag = kwargs.get("hide_diag", False)
         mid_label_x = kwargs.get("mid_label_x", None)
         mid_label_y = kwargs.get("mid_label_y", None)
@@ -865,9 +890,9 @@ class Pretty_Draw:
                 block_ptr_y.append(shape[0])
 
         # ************* 遮挡修正 *************
-        if hide_uptri:
+        if hide_triu:
             df_edge = df_edge[df_edge[label_x] >= df_edge[label_y]]
-        if hide_downtri:
+        if hide_tril:
             df_edge = df_edge[df_edge[label_x] <= df_edge[label_y]]
 
         if hide_diag:
@@ -896,6 +921,7 @@ class Pretty_Draw:
             sizes=scatter_sizes,
             size_norm=size_norm,
             zorder=2,
+            palette=cm_aff,
         )
         Visiual_Tools._plot_block_line(
             ax_edge,
@@ -905,16 +931,19 @@ class Pretty_Draw:
             Oij=Oij,
         )
         ax_edge.invert_yaxis()  # * y轴反向
-        ax_edge.xaxis.set_ticks_position("top")  # * 将x轴的位置设置在顶部
         ax_edge.tick_params(axis="both")
+        ax_edge.spines["right"].set_visible(False)
+        ax_edge.spines["top"].set_visible(False)
+        ax_edge.spines["bottom"].set_visible(False)
+        ax_edge.spines["left"].set_visible(False)
+        ax_edge.xaxis.set_ticks_position("top")  # * 将x轴的位置设置在顶部
+        ax_edge.yaxis.set_ticks_position("left")  # * 将y轴的位置设置在左侧
+        ax_edge.xaxis.set_label_position("top")
+        ax_edge.yaxis.set_label_position("left")
         # ************* 副标签 修正 比如对于分块图像，存放相机名称 *************
         if mid_label_x or mid_label_y:
-            ax2 = ax_edge.twinx()
-            original_xticks = ax_edge.get_xticks()
-            original_xticklabels = ax_edge.get_xticklabels()
 
-            ax2: Axes = ax_edge._make_twin_axes(sharex=ax_edge)
-            # ax2.set_autoscalex_on(ax_edge.get_autoscalex_on())
+            ax2: Axes = ax_edge._make_twin_axes()
             ax2.patch.set_visible(False)
             ax2.spines["right"].set_visible(False)
             ax2.spines["top"].set_visible(False)
@@ -923,14 +952,12 @@ class Pretty_Draw:
             ax2.xaxis.set_visible(False)
             ax2.yaxis.set_visible(False)
             if mid_label_x:
-                # ax2.xaxis.set_visible(True)
-                # ax2.xaxis.tick_bottom()
-                # mid_pos_x = (np.array([0] + block_ptr_x[:-1]) + block_ptr_x) / 2
-                # ax2.set_xticks(mid_pos_x)
-                # ax2.set_xticklabels(mid_label_x)
-                # # 恢复原始坐标轴的x轴标签
-                # ax_edge.set_xticks(original_xticks)
-                # ax_edge.set_xticklabels(original_xticklabels)
+                ax2.xaxis.set_visible(True)
+                ax2.xaxis.tick_bottom()
+                mid_pos_x = (np.array([0] + block_ptr_x[:-1]) + block_ptr_x) / 2 - 0.5
+                ax2.set_xticks(mid_pos_x)
+                ax2.set_xticklabels(mid_label_x)
+                ax2.set_xlim(ax_edge.get_xlim())  # * 否则可能会错位
                 pass
             else:
                 pass
@@ -939,23 +966,19 @@ class Pretty_Draw:
                 ax2.invert_yaxis()  # * y轴反向
                 ax2.yaxis.set_visible(True)
                 ax2.yaxis.tick_right()
-                mid_pos_y = (np.array([0] + block_ptr_y[:-1]) + block_ptr_y) / 2
+                mid_pos_y = (np.array([0] + block_ptr_y[:-1]) + block_ptr_y) / 2 - 0.5
                 ax2.set_yticks(mid_pos_y)
                 ax2.set_yticklabels(mid_label_y)
+                ax2.set_ylim(ax_edge.get_ylim())  # * 否则可能会错位
+                pass
             else:
                 pass
 
         # * 其他修正
         fig.subplots_adjust(right=0.8)
-        ax_edge.xaxis.set_label_position("top")
-        ax_edge.yaxis.set_label_position("left")
         # * 画图的设置
         # * frameon 图例的一个小灰盒子背景，图例放到左边
         sns.move_legend(ax_edge, "upper left", labelspacing=shape[1] / 20, ncol=1, frameon=True, bbox_to_anchor=(1, 1), borderaxespad=5)
-        ax_edge.spines["right"].set_visible(False)
-        ax_edge.spines["top"].set_visible(False)
-        ax_edge.spines["bottom"].set_visible(False)
-        ax_edge.spines["left"].set_visible(False)
 
         return fig
 
@@ -998,8 +1021,8 @@ class Pretty_Draw:
             values = np.array(adj).flatten()
         else:
             adj = convert_to_numpy(adj, sparse_shape=shape)
-            edge_index = np.indices(adj.shape).reshape(2, -1)
-            values = np.array(adj).flatten()
+            edge_index = np.stack(adj.nonzero())
+            values = adj[*edge_index]
 
         if shape is None:
             shape = adj.shape  # type: ignore
