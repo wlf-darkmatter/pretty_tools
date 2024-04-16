@@ -91,10 +91,11 @@ class X_Timer:
 
         return dt
 
-    def save_detail(self, file_path):
+    def save_detail(self, file_path) -> list[str]:
         from scipy import stats
         import numpy as np
 
+        list_str = []
         # 计算描述统计
         with open(file_path, "w") as f:
             for label, time_list in self.dict_detail.items():
@@ -104,8 +105,10 @@ class X_Timer:
                     u_t, s_t = desc.mean, np.sqrt(desc.variance)
                 else:
                     u_t, s_t = time_list[0], 0
-
-                f.write(f"{label.ljust(self.max_label_len,' ')} (count to {str(len(time_list)).ljust(6,' ')}):  {self.__format_time_str(u_t)} ± {self.__format_time_str(s_t)} \n")
+                info = f"{label.ljust(self.max_label_len,' ')} (count to {str(len(time_list)).ljust(6,' ')}):  {self.__format_time_str(u_t)} ± {self.__format_time_str(s_t)} \n"
+                f.write(info)
+                list_str.append(info)
+        return list_str
 
     def __format_time_str(self, dt: float):
         if dt > 60:
