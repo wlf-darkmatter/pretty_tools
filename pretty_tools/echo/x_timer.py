@@ -105,8 +105,8 @@ class X_Timer:
                     u_t, s_t = desc.mean, np.sqrt(desc.variance)
                 else:
                     u_t, s_t = time_list[0], 0
-                info = f"{label.ljust(self.max_label_len,' ')} (count to {str(len(time_list)).ljust(6,' ')}):  {self.__format_time_str(u_t)} ± {self.__format_time_str(s_t)} \n"
-                f.write(info)
+                info = f"{label.ljust(self.max_label_len,' ')} (count to {str(len(time_list)).ljust(6,' ')}):  {self.__format_time_str(u_t)} ± {self.__format_time_str(s_t)} "
+                f.write(info + " \n")
                 list_str.append(info)
         return list_str
 
