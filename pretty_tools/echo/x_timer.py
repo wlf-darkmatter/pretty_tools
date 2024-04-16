@@ -124,5 +124,5 @@ class X_Timer:
             return f"{int(dt*1000000):d} μs"
         elif dt > 1e-5:
             return f"{dt*1000000:.1f} μs"
-        elif dt > 1e-6:
+        else:
             return f"{dt*1000000:.2f} μs"
