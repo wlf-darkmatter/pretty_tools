@@ -1116,3 +1116,36 @@ class MultiGraph_Utils:
         # from pretty_tools.visualization.draw import Pretty_Draw, Visiual_Tools  #? debug
         # vis_block_gt = Visiual_Tools.fig_to_image(Pretty_Draw.draw_edge_index(match_tri_u, shape=(len(y), len(y)), np_cumsum=block_ptr, Oij=(block_ptr[0], block_ptr[0])))  #? debug
         return match_tri_u
+
+    @staticmethod
+    def get_gt_edge_index_from_list_np_y(list_y: list[np.ndarray]) -> np.ndarray:
+        """
+        只能处理一个场景下的真值匹配对
+
+        Args:
+            list_y (list[np.ndarray]): 真值标签列表，列表有多长就说明有多少个相机
+
+        Example:
+
+        list_y = [array([ 0,  2,  4,  6,  7, 20, 28, 32, 33, 34, 35, 36, 37, 44]),
+                  array([ 0,  4,  6,  7, 18, 20, 27, 29, 32, 33, 34, 49, 50]),
+                  array([ 0,  4,  7, 34, 35, 36, 37])]
+
+        get_gt_edge_index_from_list_np_y(list_y)
+
+        >>> array([[ 0,  1,  2,  3,  5,  8,  9, 10,  0,  1,  2,  3,  4,  5,  6, 14, 15, 16, 17],
+                   [14, 16, 17, 18, 19, 21, 22, 23, 27, 29, 31, 36, 37, 38, 39, 27, 28, 30, 37]])
+        """
+        from itertools import combinations
+
+        dict_tmp = {i: v for i, v in enumerate(list_y)}
+        offset = np.cumsum([0] + [len(i) for i in list_y])
+        edge_index = []
+        for i, j in combinations(dict_tmp.keys(), 2):
+            array_i = dict_tmp[i]
+            array_j = dict_tmp[j]
+            tmp_edge_index = np.array((array_i[:, None] == array_j[None, :]).nonzero())
+            tmp_edge_index[0] += offset[i]
+            tmp_edge_index[1] += offset[j]
+            edge_index.append(tmp_edge_index)
+        return np.concatenate(edge_index, axis=1)
