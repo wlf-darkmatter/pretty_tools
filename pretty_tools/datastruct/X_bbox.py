@@ -1,13 +1,23 @@
+from copy import deepcopy
+from typing import Any, Callable, Dict, List, Literal, Tuple, TypeVar, Union
+
+import numpy as np
 import torch
+from torch import Tensor
 from torchvision.ops import box_area
-from torchvision.ops.boxes import _upcast
-from torchvision.ops import generalized_box_iou as GIoU
-from torchvision.ops import distance_box_iou as DIoU
-from torchvision.ops import complete_box_iou as CIoU
 from torchvision.ops import box_iou as IoU
+from torchvision.ops import complete_box_iou as CIoU
+from torchvision.ops import distance_box_iou as DIoU
+from torchvision.ops import generalized_box_iou as GIoU
+from torchvision.ops.boxes import _upcast
+
+Item_Bbox = Literal["ltrb", "ltwh", "xywh"]
+
+T = TypeVar("T")
 
 
 def flat_box_inter_union(ltrb_a: torch.Tensor, ltrb_b: torch.Tensor) -> torch.Tensor:
+    assert len(ltrb_a) == len(ltrb_b), "输入的两个张量必须一致"
     area1 = box_area(ltrb_a)
     area2 = box_area(ltrb_b)
     lt = torch.max(ltrb_a[:, :2], ltrb_b[:, :2])  # [N, 2]
@@ -147,17 +157,6 @@ def flat_box_diou_iou(ltrb_a: torch.Tensor, ltrb_b: torch.Tensor, eps: float = 1
 ['tensor(GPU) (inplace=True)']: 0.1646 s.
 
 """
-
-from typing import Any, Callable, Dict, List, Literal, Tuple, Union, TypeVar
-from copy import deepcopy
-import numpy as np
-import torch
-from torch import Tensor
-
-
-Item_Bbox = Literal["ltrb", "ltwh", "xywh"]
-
-T = TypeVar("T")
 
 
 def __quick_convert(bbox: T, inplace: bool) -> tuple[bool, T]:
@@ -392,8 +391,8 @@ dict_convert_fn = {
 
 if __name__ == "__main__":
     import torch
-    from torchvision.ops import box_convert
     from pretty_tools.echo import X_Timer
+    from torchvision.ops import box_convert
 
     def wrap_fn(data, N, bs, inplace=False):
         for _ in range(N):
