@@ -57,7 +57,7 @@ except:
     pass
 from scipy import sparse
 
-from pretty_tools.datastruct.bbox_convert import dict_convert_fn
+from pretty_tools.datastruct.X_bbox import dict_convert_fn
 from pretty_tools.datastruct.cython_bbox import cy_bbox_overlaps_iou
 from pretty_tools.datastruct.multi_index_dict import mdict
 from pretty_tools.datastruct.np_enhance import convert_to_numpy

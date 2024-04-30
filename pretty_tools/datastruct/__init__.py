@@ -3,13 +3,13 @@
 
 """
 
-from . import bbox_convert
-from .bbox_convert import ltrb_to_ltwh as np_ltrb_to_ltwh
-from .bbox_convert import ltrb_to_xywh as np_ltrb_to_xywh
-from .bbox_convert import ltwh_to_ltrb as np_ltwh_to_ltrb
-from .bbox_convert import ltwh_to_xywh as np_ltwh_to_xywh
-from .bbox_convert import xywh_to_ltrb as np_xywh_to_ltrb
-from .bbox_convert import xywh_to_ltwh as np_xywh_to_ltwh
+from . import X_bbox
+from .X_bbox import ltrb_to_ltwh as np_ltrb_to_ltwh
+from .X_bbox import ltrb_to_xywh as np_ltrb_to_xywh
+from .X_bbox import ltwh_to_ltrb as np_ltwh_to_ltrb
+from .X_bbox import ltwh_to_xywh as np_ltwh_to_xywh
+from .X_bbox import xywh_to_ltrb as np_xywh_to_ltrb
+from .X_bbox import xywh_to_ltwh as np_xywh_to_ltwh
 from .color_convert import *
 from .general_ann import GeneralAnn
 from .multi_index_dict import mdict

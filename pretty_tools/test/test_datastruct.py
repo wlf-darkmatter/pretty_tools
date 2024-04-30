@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 import torch
 from pretty_tools import PATH_PRETTY
-from pretty_tools.datastruct import bbox_convert as np_converter
+from pretty_tools.datastruct import X_bbox as np_converter
 from pretty_tools.datastruct import cython_bbox, mdict
 from pretty_tools.test.core import error_fp8, error_fp16, error_fp32, error_fp64, error_fp128, np_Max_error
 
@@ -40,7 +40,7 @@ test_ann = np.array(
 test_ann_torch = torch.as_tensor(test_ann)
 
 
-class Test_Bbox_Convert:
+class Test_X_bbox:
     def setup_method(self):
         self.bbox1_fp64 = np.array([0.3, 0.4, 0.5, 0.6], dtype=np.float64)
         self.bbox1_fp32 = np.array([0.3, 0.4, 0.5, 0.6], dtype=np.float32)
@@ -58,7 +58,7 @@ class Test_Bbox_Convert:
 
         """
 
-        from pretty_tools.datastruct.bbox_convert import ltrb_to_ltwh, ltrb_to_xywh, ltwh_to_ltrb, ltwh_to_xywh, xywh_to_ltrb, xywh_to_ltwh
+        from pretty_tools.datastruct.X_bbox import ltrb_to_ltwh, ltrb_to_xywh, ltwh_to_ltrb, ltwh_to_xywh, xywh_to_ltrb, xywh_to_ltwh
 
         check = np_Max_error
         #! 估计误差的时候，由于计算的时候存在一次加减运算，最后又要和一个存在误差的真值做差，因此误差累计是3倍
@@ -93,7 +93,7 @@ class Test_Bbox_Convert:
 
 
         """
-        from pretty_tools.datastruct.bbox_convert import ltrb_to_ltwh, ltrb_to_xywh, ltwh_to_ltrb, ltwh_to_xywh, xywh_to_ltrb, xywh_to_ltwh
+        from pretty_tools.datastruct.X_bbox import ltrb_to_ltwh, ltrb_to_xywh, ltwh_to_ltrb, ltwh_to_xywh, xywh_to_ltrb, xywh_to_ltwh
 
         check = np_Max_error
 
