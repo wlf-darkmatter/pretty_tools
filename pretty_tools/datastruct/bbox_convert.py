@@ -7,31 +7,37 @@
 # * 总结，inplace更快，速度上，
 #! Numpy >> Tensor(GPU) > Tensor(CPU)
 # * 耗时如下
-['numpy (inplace=True)']:        0.5301 s   13.5x
-['numpy ']:                      0.6918 s   8.88x
-['tensor(CPU) (inplace=True)']:  5.0724 s   1.66x
-['    tensor(CPU)     ']:        7.3101 s   1.00x
-['tensor(GPU) (inplace=True)']:  8.6720 s   0.96x
-['    tensor(GPU)     ']:        12.3603 s  0.67x
+['numpy    ']: 0.0131 s.
+['numpy (inplace=True)']: 0.0110 s.
+['tensor(CPU)         ']: 0.1550 s.
+['(V)tensor(CPU)      ']: 0.0603 s.
+['tensor(GPU)         ']: 0.2785 s.
+['(V)tensor(GPU)      ']: 0.1147 s.
+['tensor(CPU) (inplace=True)']: 0.1057 s.
+['tensor(GPU) (inplace=True)']: 0.1737 s.
 
 #? 大批量矩阵运算 循环条件速度测试， 循环条件 46*24，两层循环，矩阵大小为 1000000
 
 # * 总结，inplace更快，速度上，
 #! Tensor(GPU) > Tensor(CPU) >> Numpy
 # * 耗时如下
-['tensor(GPU) (inplace=True)']: 0.1370 s
-['tensor(GPU)']:                0.1965 s
-['tensor(CPU) (inplace=True)']: 0.6402 s
-['tensor(CPU)']:                0.9220 s.
-['numpy (inplace=True)']:       7.8578 s
-['numpy']:                      10.5766 s
-
+['numpy    ']: 9.3960 s.
+['numpy (inplace=True)']: 6.8870 s.
+['tensor(CPU)         ']: 1.0695 s.
+['(V)tensor(CPU)      ']: 0.9479 s.
+['tensor(GPU)         ']: 0.2654 s.
+['(V)tensor(GPU)      ']: 0.1167 s.
+['tensor(CPU) (inplace=True)']: 0.7182 s.
+['tensor(GPU) (inplace=True)']: 0.1646 s.
 
 """
 
 from typing import Any, Callable, Dict, List, Literal, Tuple, Union, TypeVar
 from copy import deepcopy
 import numpy as np
+import torch
+from torch import Tensor
+
 
 Item_Bbox = Literal["ltrb", "ltwh", "xywh"]
 
@@ -64,6 +70,24 @@ def ltrb_to_ltwh(ltrb: T, inplace=False) -> T:
     return ltwh
 
 
+def pt_ltrb_to_ltwh(boxes: Tensor) -> Tensor:
+    """
+    Converts bounding boxes from (l, t, r, b) format to (l, t, w, h) format.
+    (l, t) refers to top left of bounding box.
+    (r, b) refer to bottom right of bounding box
+    Args:
+        boxes (Tensor[N, 4]): boxes in (l, t, r, b) which will be converted.
+
+    Returns:
+        boxes (Tensor[N, 4]): boxes in (l, t, w, h) format.
+    """
+    l, t, r, b = boxes.unbind(-1)
+    w = r - l  # x2 - x1
+    h = b - t  # y2 - y1
+    boxes = torch.stack((l, t, w, h), dim=-1)
+    return boxes
+
+
 def ltwh_to_ltrb(ltwh: T, inplace=False) -> T:
     ndim1, ltrb = __quick_convert(ltwh, inplace)
 
@@ -72,6 +96,22 @@ def ltwh_to_ltrb(ltwh: T, inplace=False) -> T:
     if ndim1:
         return ltrb[0]
     return ltrb
+
+
+def pt_ltwh_to_ltrb(boxes: Tensor) -> Tensor:
+    """
+    Converts bounding boxes from (l, t, w, h) format to (l, t, r, b) format.
+    (l, t) refers to top left of bounding box.
+    (w, h) refers to width and height of box.
+    Args:
+        boxes (Tensor[N, 4]): boxes in (x, y, w, h) which will be converted.
+
+    Returns:
+        boxes (Tensor[N, 4]): boxes in (l, t, r, b) format.
+    """
+    l, t, w, h = boxes.unbind(-1)
+    boxes = torch.stack([l, t, l + w, t + h], dim=-1)
+    return boxes
 
 
 def ltwh_to_xywh(ltwh: T, inplace=False) -> T:
@@ -87,6 +127,25 @@ def ltwh_to_xywh(ltwh: T, inplace=False) -> T:
     return xywh
 
 
+def pt_ltwh_to_xywh(boxes: Tensor) -> Tensor:
+    """
+    Converts bounding boxes from (l, t, w, h) format to (cx, cy, w, h) format.
+    (l, t) refers to top left of bounding box.
+    (w, h) refers to width and height of box.
+    Args:
+        boxes (Tensor(N, 4)): boxes in (l, t, w, h) format which will be converted.
+
+    Returns:
+        boxes (Tensor[N, 4]): boxes in (cx, cy, w, h) format.
+    """
+    # We need to change all 4 of them so some temporary variable is needed.
+    l, t, w, h = boxes.unbind(-1)
+    cx = l + 0.5 * w
+    cy = t + 0.5 * h
+
+    return torch.stack((cx, cy, w, h), dim=-1)
+
+
 def xywh_to_ltwh(xywh: T, inplace=False) -> T:
     """ """
     ndim1, ltwh = __quick_convert(xywh, inplace)
@@ -96,6 +155,25 @@ def xywh_to_ltwh(xywh: T, inplace=False) -> T:
     if ndim1:
         return ltwh[0]
     return ltwh
+
+
+def pt_xywh_to_ltwh(boxes: Tensor) -> Tensor:
+    """
+    Converts bounding boxes from (cx, cy, w, h) format to (l, t, w, h) format.
+    (cx, cy) refers to center of bounding box
+    (w, h) are width and height of bounding box
+    Args:
+        boxes (Tensor[N, 4]): boxes in (cx, cy, w, h) format which will be converted.
+
+    Returns:
+        boxes (Tensor(N, 4)): boxes in (l, t, w, h) format.
+    """
+    # We need to change all 4 of them so some temporary variable is needed.
+    cx, cy, w, h = boxes.unbind(-1)
+    l = cx - 0.5 * w
+    t = cy - 0.5 * h
+
+    return torch.stack((l, t, w, h), dim=-1)
 
 
 def xywh_to_ltrb(xywh: T, inplace=False) -> T:
@@ -111,6 +189,29 @@ def xywh_to_ltrb(xywh: T, inplace=False) -> T:
     return ltrb
 
 
+def pt_xywh_to_ltrb(boxes: Tensor) -> Tensor:
+    """
+    Converts bounding boxes from (cx, cy, w, h) format to (l, t, r, b) format.
+    (x, y) refers to center of bounding box
+    (w, h) are width and height of bounding box
+    Args:
+        boxes (Tensor[N, 4]): boxes in (cx, cy, w, h) format which will be converted.
+
+    Returns:
+        boxes (Tensor(N, 4)): boxes in (l, t, r, b) format.
+    """
+    # We need to change all 4 of them so some temporary variable is needed.
+    cx, cy, w, h = boxes.unbind(-1)
+    l = cx - 0.5 * w
+    t = cy - 0.5 * h
+    r = cx + 0.5 * w
+    b = cy + 0.5 * h
+
+    boxes = torch.stack((l, t, r, b), dim=-1)
+
+    return boxes
+
+
 def ltrb_to_xywh(ltrb: T, inplace=False) -> T:
     ndim1, xywh = __quick_convert(ltrb, inplace)
 
@@ -121,6 +222,28 @@ def ltrb_to_xywh(ltrb: T, inplace=False) -> T:
     if ndim1:
         return xywh[0]
     return xywh
+
+
+def pt_ltrb_to_xywh(boxes: Tensor) -> Tensor:
+    """
+    Converts bounding boxes from (l, t, r, b) format to (cx, cy, w, h) format.
+    (l, t) refers to top left of bounding box.
+    (r, b) refer to bottom right of bounding box
+    Args:
+        boxes (Tensor[N, 4]): boxes in (l, t, r, b) format which will be converted.
+
+    Returns:
+        boxes (Tensor(N, 4)): boxes in (cx, cy, w, h) format.
+    """
+    l, t, r, b = boxes.unbind(-1)
+    cx = (l + r) / 2
+    cy = (t + b) / 2
+    w = r - l
+    h = b - t
+
+    boxes = torch.stack((cx, cy, w, h), dim=-1)
+
+    return boxes
 
 
 dict_convert_fn = {
@@ -153,6 +276,19 @@ dict_convert_fn = {
 
 if __name__ == "__main__":
     import torch
+    from torchvision.ops import box_convert
+    from pretty_tools.echo import X_Timer
+    from pretty_tools.datastruct.bbox_convert import ltrb_to_ltwh, ltrb_to_xywh, ltwh_to_ltrb, ltwh_to_xywh, xywh_to_ltrb, xywh_to_ltwh
+
+    def wrap_fn(data, N, bs, inplace=False):
+        for _ in range(N):
+            for _ in range(bs):
+                xywh_to_ltrb(data, inplace)
+
+    def wrap_fn_torchvision(data, N, bs):
+        for _ in range(N):
+            for _ in range(bs):
+                pt_xywh_to_ltrb(data)
 
     def test_speed_multi_for_small_array_convert():
         """
@@ -168,8 +304,6 @@ if __name__ == "__main__":
         ['tensor(GPU)']:                 125.9889 s
 
         """
-        from pretty_tools.echo import X_Timer
-        from pretty_tools.datastruct.bbox_convert import ltrb_to_ltwh, ltrb_to_xywh, ltwh_to_ltrb, ltwh_to_xywh, xywh_to_ltrb, xywh_to_ltwh
 
         N = 50
         bs = 24
@@ -181,30 +315,28 @@ if __name__ == "__main__":
         random_bbox_tensor = torch.randn(n_bbox, 4, dtype=torch.float32)
         random_bbox_tensor_gpu = random_bbox_tensor.to("cuda")
 
-        def wrap_fn(data, inplace=False):
-            for _ in range(N):
-                for _ in range(bs):
-                    for _ in range(repeat):
-                        xywh_to_ltrb(data, inplace)
-
         timer = X_Timer()
 
-        wrap_fn(random_bbox_np)
+        wrap_fn(random_bbox_np, N, bs)
         timer.record("numpy", verbose=True)
 
-        wrap_fn(random_bbox_np, inplace=True)
+        wrap_fn(random_bbox_np, N, bs, inplace=True)
         timer.record("numpy (inplace=True)", verbose=True)
 
-        wrap_fn(random_bbox_tensor)
+        wrap_fn(random_bbox_tensor, N, bs)
         timer.record("tensor(CPU)", verbose=True)
+        wrap_fn_torchvision(random_bbox_tensor, N, bs)
+        timer.record("(V)tensor(CPU)", verbose=True)
 
-        wrap_fn(random_bbox_tensor_gpu)
+        wrap_fn(random_bbox_tensor_gpu, N, bs)
         timer.record("tensor(GPU)", verbose=True)
+        wrap_fn_torchvision(random_bbox_tensor_gpu, N, bs)
+        timer.record("(V)tensor(GPU)", verbose=True)
 
-        wrap_fn(random_bbox_tensor, inplace=True)
+        wrap_fn(random_bbox_tensor, N, bs, inplace=True)
         timer.record("tensor(CPU) (inplace=True)", verbose=True)
 
-        wrap_fn(random_bbox_tensor_gpu, inplace=True)
+        wrap_fn(random_bbox_tensor_gpu, N, bs, inplace=True)
         timer.record("tensor(GPU) (inplace=True)", verbose=True)
 
     def test_speed_huge_array_convert():
@@ -221,8 +353,6 @@ if __name__ == "__main__":
         ['numpy']:                      11.2856 s
 
         """
-        from pretty_tools.echo import X_Timer
-        from pretty_tools.datastruct.bbox_convert import ltrb_to_ltwh, ltrb_to_xywh, ltwh_to_ltrb, ltwh_to_xywh, xywh_to_ltrb, xywh_to_ltwh
 
         N = 46
         bs = 24
@@ -233,30 +363,31 @@ if __name__ == "__main__":
         random_bbox_tensor = torch.randn(n_bbox, 4, dtype=torch.float32)
         random_bbox_tensor_gpu = random_bbox_tensor.to("cuda")
 
-        def wrap_fn(data, inplace=False):
-            for _ in range(N):
-                for _ in range(bs):
-                    xywh_to_ltrb(data, inplace)
-
         timer = X_Timer()
 
-        wrap_fn(random_bbox_np)
+        wrap_fn(random_bbox_np, N, bs)
         timer.record("numpy", verbose=True)
 
-        wrap_fn(random_bbox_np, inplace=True)
+        wrap_fn(random_bbox_np, N, bs, inplace=True)
         timer.record("numpy (inplace=True)", verbose=True)
 
-        wrap_fn(random_bbox_tensor)
+        wrap_fn(random_bbox_tensor, N, bs)
         timer.record("tensor(CPU)", verbose=True)
+        wrap_fn_torchvision(random_bbox_tensor, N, bs)
+        timer.record("(V)tensor(CPU)", verbose=True)
 
-        wrap_fn(random_bbox_tensor_gpu)
+        wrap_fn(random_bbox_tensor_gpu, N, bs)
         timer.record("tensor(GPU)", verbose=True)
+        wrap_fn_torchvision(random_bbox_tensor_gpu, N, bs)
+        timer.record("(V)tensor(GPU)", verbose=True)
 
-        wrap_fn(random_bbox_tensor, inplace=True)
+        wrap_fn(random_bbox_tensor, N, bs, inplace=True)
         timer.record("tensor(CPU) (inplace=True)", verbose=True)
 
-        wrap_fn(random_bbox_tensor_gpu, inplace=True)
+        wrap_fn(random_bbox_tensor_gpu, N, bs, inplace=True)
         timer.record("tensor(GPU) (inplace=True)", verbose=True)
 
+    print("========== test_speed_multi_for_small_array_convert =======")
     test_speed_multi_for_small_array_convert()
+    print("========== test_speed_huge_array_convert =======")
     test_speed_huge_array_convert()
