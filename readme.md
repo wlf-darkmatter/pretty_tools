@@ -7,8 +7,10 @@
 ```bash
 # 方法 1
 pip install -e pretty_tools
-# 方法 2
-pip install git+http://git.x-contion.top/lab_share/pretty_tools.git
+# 方法 2-1
+pip install git+http://ayaka.x-contion.top:1213/lab_share/pretty_tools.git
+# 方法 2-2
+pip install git+http://www.x-contion.top:1214/lab_share/pretty_tools.git
 
 ```
 
