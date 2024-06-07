@@ -15,19 +15,17 @@ Start
 
 .. code-block:: bash
 
-   # 公网安装（如果公网服务器正常运行的话）
-   pip install git+http://git.x-contion.top/lab_share/pretty_tools.git
-
-   # or
-   pip install git+http://lux4.x-contion.top:1213/lab_share/pretty_tools.git
-   pip install git+http://lux.x-contion.top:1213/lab_share/pretty_tools.git
+   # IPv6
+   pip install git+http://ayaka.x-contion.top:1213/lab_share/pretty_tools.git
+   # IPv4
+   pip install git+http://www.x-contion.top:1214/lab_share/pretty_tools.git
 
 
 安装方法 2
 
 .. code-block:: bash
 
-   git clone http://lux.x-contion.top:1213/lab_share/pretty_tools.git
+   git clone http://www.x-contion.top:1214/lab_share/pretty_tools.git
    cd pretty_tools
    pip install -e pretty_tools
 
@@ -68,19 +66,23 @@ Start
 
    如果你参与开发了，你会学到 cython 编译、更底层的 python 操作。
 
-   师兄毕业之后也会继续开发，但是不会再教了，要学的话抓紧加入开发团队。
+   wlf 毕业之后也会继续开发，要学的话抓紧加入开发团队。
 
 .. toctree::
    :maxdepth: 2
    :glob:
    :caption: PACKAGE REFERENCE
 
+   module/analysis
    module/datastruct
    module/echo
-   module/visualization
-   module/resources
+   module/metrics
    module/multi_works
+   module/resources
+   module/solver
    module/transform
+   module/video
+   module/visualization
 
 
 

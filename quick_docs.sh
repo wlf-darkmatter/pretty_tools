@@ -16,10 +16,10 @@ make html
 # 同步到lux服务器上
 cd "${shell_pwd}"
 
-passwd=$(cat ./tmp/passwd_lux.txt)
+passwd=$(cat ./tmp/passwd_sync)
 
 sshpass -p $passwd rsync --delete -avzP ./docs/build/html/* \
-    wlf@lux4.x-contion.top:/nas/server/documents_storage/pretty_tools
+    root@ayaka.x-contion.top:/documents_storage/pretty_tools
 
 
 
