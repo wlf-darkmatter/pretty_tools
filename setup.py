@@ -76,11 +76,11 @@ def get_ext_graph_enhance():
 
 setup(
     name="pretty_tools",
-    version="0.2.0",
+    version="0.2.1",
     author="Lingfeng Wang",
     author_email="wlf_x_contion@sina.com",
     description="A pretty tools",
-    url="http://git.x-contion.top/lab_share/pretty_tools",
+    url="http://www.x-contion.top:1214/lab_share/pretty_tools",
     packages=find_packages(),
     ext_modules=get_ext_cythonbbox() + get_cython_misc_extensions() + get_ext_numpy_enhance() + get_ext_graph_enhance(),
     setup_requires=["setuptools>=18.0", "Cython", "numpy"],
