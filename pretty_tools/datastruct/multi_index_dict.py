@@ -301,7 +301,8 @@ class mdict(Generic[KT, VT]):
         else:
             out_sparse = sparse.lil_matrix((index_slice[-1], index_slice[-1]))
         for index, matched in mdict_input.items():
-            if len(matched[0]) > 0:
-                result_pos = matched[0] + index_slice[*[index]]  # 格式是 ij
-                out_sparse[*result_pos.T] = matched[1]
+            pass
+            # if len(matched[0]) > 0:
+            #     result_pos = matched[0] + index_slice[*[index]]  # 格式是 ij
+            #     out_sparse[*result_pos.T] = matched[1]
         return out_sparse

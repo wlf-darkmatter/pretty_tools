@@ -3,6 +3,8 @@ from distutils.command.build import build as _build
 
 import numpy as np
 from setuptools import Extension, find_packages, setup
+from glob import glob
+
 
 if os.name == "nt":
     compile_args = {"gcc": ["/Qstd=c99"]}
@@ -73,6 +75,31 @@ def get_ext_graph_enhance():
     ]
     return ext_modules_graph_enhance
 
+# * =================================  pybind11 编译 _C_misc_11  =============================================
+from pybind11.setup_helpers import Pybind11Extension, build_ext
+# 把 build_ext 给到setup里面，这样在编译的时候就会自动调用build_ext
+def get_ext_pybind11_ext():
+    
+    src = glob("pretty_tools_cpp/**/*.cpp",recursive=True)
+    print("pretty_tools_cpp: ", src)
+    ext_modules_pybind11_misc = [
+        Pybind11Extension(
+            name="pretty_tools._C_pretty_tools",
+            sources=src,
+            include_dirs=["./pretty_tools_cpp"],
+            
+            
+        )
+    ]
+    return ext_modules_pybind11_misc
+
+
+def get_all_ext_modules():
+    ext_modules = []
+    ext_modules = ext_modules + get_ext_cythonbbox() + get_cython_misc_extensions() + get_ext_numpy_enhance() + get_ext_graph_enhance()
+    ext_modules = ext_modules + get_ext_pybind11_ext()
+
+    return ext_modules
 
 setup(
     name="pretty_tools",
@@ -82,7 +109,8 @@ setup(
     description="A pretty tools",
     url="http://git.x-contion.top/lab_share/pretty_tools",
     packages=find_packages(),
-    ext_modules=get_ext_cythonbbox() + get_cython_misc_extensions() + get_ext_numpy_enhance() + get_ext_graph_enhance(),
+    # cmdclass={"build_ext": build_ext},
+    ext_modules=get_all_ext_modules(),
     setup_requires=["setuptools>=18.0", "Cython", "numpy"],
     classifiers=[
         "Programming Language :: Python :: 3.11",

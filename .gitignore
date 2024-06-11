@@ -13,3 +13,5 @@ datastruct/src/*.html
 **/*.so
 .eggs
 
+**/*.pyd
+.vscode/
