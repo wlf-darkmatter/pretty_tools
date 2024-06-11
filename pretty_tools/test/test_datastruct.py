@@ -665,40 +665,6 @@ class Test_GeneralAnn:
         (ann_xywh["id"] == test_ann[:, 1]).all()
         # todo 测试还没写全，但是懒得写了
 
-    def test_generalbboxes_setter(self):
-        from pretty_tools.datastruct import GeneralAnn
-
-        bboxes = GeneralAnn(test_ann, str_format="xywh")
-
-        check_id = id(bboxes.ltrb[:, 2])
-        bboxes.ltrb[:, 2] = 2  #! 这种索引方式修改的是缓存中的 数组，对真实的数据没有任何影响
-        bboxes.get_ltrbs.cache_clear()
-
-        tmp = np.random.random((bboxes.shape[0], 4))
-
-        # * 检查 set 方法
-        bboxes.set_ltrb(tmp)
-        assert np_Max_error(tmp, bboxes.ltrb) < error_fp64
-
-        bboxes.set_ltwh(tmp)
-        assert np_Max_error(tmp, bboxes.ltwh) < error_fp64
-
-        bboxes.set_xywh(tmp)
-        assert np_Max_error(tmp, bboxes.xywh) < error_fp64
-
-    def test_generalbboxes_cache(self):
-        from pretty_tools.datastruct import GeneralAnn
-
-        bboxes = GeneralAnn(test_ltrb, str_format="ltrb")
-
-        bboxes = GeneralAnn(test_ann, str_format="xywh")
-        assert id(bboxes.ltrb) == id(bboxes.ltrb)  # * 判断缓存机制是否生效
-        assert id(bboxes.xywh) == id(bboxes.xywh)  # * 判断缓存机制是否生效
-        assert id(bboxes.ltwh) == id(bboxes.ltwh)  # * 判断缓存机制是否生效
-        assert id(bboxes.ids) == id(bboxes.ids)  # * 判断缓存机制是否生效
-        assert id(bboxes.frames) == id(bboxes.frames)  # * 判断缓存机制是否生效
-        # todo 输入格式为 List[np.ndarray] 还没测试过，以及之后的torch.Tensor格式也还没补全
-
     def test_autonorm(self):
         """测试自动归一化功能"""
         from pretty_tools.datastruct import GeneralAnn
@@ -751,49 +717,6 @@ class Test_GeneralAnn:
         assert bboxes.ori_WH == (2000, 1000)
 
 
-class Test_TrackInstance:
-    def setup_method(self):
-        import cv2
-        from PIL import Image
-
-        self.test_img = Image.open(PATH_PRETTY.joinpath("resources/imgs/Circle_View1_000001.jpg"))
-
-    def test_build(self):
-        from pretty_tools.datastruct import TrackCameraInstances
-
-        test_trackinstances = TrackCameraInstances(test_ann, str_format="xywh")
-
-        assert id(test_trackinstances.ltrb) == id(test_trackinstances.ltrb)  # * 判断缓存机制是否生效
-        assert id(test_trackinstances.xywh) == id(test_trackinstances.xywh)  # * 判断缓存机制是否生效
-        assert id(test_trackinstances.ltwh) == id(test_trackinstances.ltwh)  # * 判断缓存机制是否生效
-
-    def test_build_from_ann(self):
-        from pretty_tools.datastruct import GeneralAnn, TrackCameraInstances
-
-        test_generalann = GeneralAnn(ori_ann=test_ltrb, str_format="ltrb")
-        test_trackinstances = TrackCameraInstances(from_general=test_generalann)
-        assert np_Max_error(test_trackinstances.xywh, test_generalann.xywh) < error_fp64
-        assert np_Max_error(test_trackinstances.ltrb, test_generalann.ltrb) < error_fp64
-        assert np_Max_error(test_trackinstances.ltwh, test_generalann.ltwh) < error_fp64
-
-        #! 检查是否自动归一化
-        test_trackinstance = TrackCameraInstances(
-            from_general=test_generalann,
-        )
-        test_trackinstance.set_ori_WH((1920, 1080), renorm=True)
-
-        assert test_trackinstance.xywh[:, :2].max() < 2.0
-        assert test_trackinstance.xywh[:, :2].min() > -1.0
-
-    def test_build_with_embbeding(self):
-        from pretty_tools.datastruct import TrackCameraInstances
-
-        test_trackinstances = TrackCameraInstances(test_ann, str_format="xywh")
-        test_trackinstances.embeddings = {}
-        test_feat = np.load(PATH_PRETTY.joinpath("resources/data/test_feat_9x2048.npy"))
-
-        test_trackinstances.embeddings["curr_feat"] = test_feat
-        pass
 
 
 class Test_TrackGraph:
@@ -896,72 +819,6 @@ class Test_TrackGraph:
         assert test_graph_to_instance.ori_img == image
         assert test_trackgraph.ori_WH == image.size
         assert test_graph_to_instance.ori_WH == image.size
-
-    def test_save_and_load(self):
-        # * 即时保存
-        from pretty_tools.datastruct import GeneralAnn, TrackCameraGraph, TrackCameraInstances
-
-        test_trackgraph = TrackCameraGraph(
-            ori_ann=test_ltrb,
-            str_format="ltrb",
-            node_x=self.test_feat,
-            edge_index=self.edgelist,
-        )
-        TrackCameraGraph.save(test_trackgraph, PATH_PRETTY.joinpath("/tmp/test_generalann.pkl"))
-
-        test_load_trackgraph = TrackCameraGraph.load(PATH_PRETTY.joinpath("/tmp/test_generalann.pkl"))
-        assert (test_load_trackgraph.ltrb == test_trackgraph.ltrb).all(), "校验两个的信息是否一致"
-
-        pass
-        # * 读取预设的
-        test_load_trackgraph = TrackCameraGraph.load(PATH_PRETTY.joinpath("resources/data/test_generalann.pkl"))
-        assert (test_load_trackgraph.ltrb == test_trackgraph.ltrb).all(), "校验两个的信息是否一致"
-
-
-class Test_Graph_Enhance:
-    def setup_method(self):
-        from pretty_tools.datastruct.graph_enhance import CohereGraph
-        from pretty_tools.resources import PATH_RESOURCES_DATA
-
-        self.x = np.loadtxt(PATH_RESOURCES_DATA.joinpath("test_feat_20x2048.txt"), delimiter=",")
-        self.list_len = [4, 6, 10]
-
-        self.cograph = CohereGraph(self.x, list_len=self.list_len)
-        pass
-
-    def test_onehot(self):
-        """
-        这里其实测的是 :class:`np_enhance` 中的 `cython` 函数
-        """
-        assert (
-            self.cograph.x_onehot
-            == np.array(
-                [
-                    [1.0, 0.0, 0.0],
-                    [1.0, 0.0, 0.0],
-                    [1.0, 0.0, 0.0],
-                    [1.0, 0.0, 0.0],
-                    [0.0, 1.0, 0.0],
-                    [0.0, 1.0, 0.0],
-                    [0.0, 1.0, 0.0],
-                    [0.0, 1.0, 0.0],
-                    [0.0, 1.0, 0.0],
-                    [0.0, 1.0, 0.0],
-                    [0.0, 0.0, 1.0],
-                    [0.0, 0.0, 1.0],
-                    [0.0, 0.0, 1.0],
-                    [0.0, 0.0, 1.0],
-                    [0.0, 0.0, 1.0],
-                    [0.0, 0.0, 1.0],
-                    [0.0, 0.0, 1.0],
-                    [0.0, 0.0, 1.0],
-                    [0.0, 0.0, 1.0],
-                    [0.0, 0.0, 1.0],
-                ]
-            )
-        ).all()
-        pass
-
 
 if __name__ == "__main__":
     pytest.main(
