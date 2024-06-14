@@ -963,6 +963,17 @@ class Test_Graph_Enhance:
         pass
 
 
+class Test_cpp_bbox:
+    def test_compare(self):
+        from pretty_tools._C_pretty_tools.datastruct import bbox_11
+        def bbox_area(bboxs:np.ndarray):
+            return (bboxs[:, 2] - bboxs[:, 0]) * (bboxs[:, 3] - bboxs[:, 1])
+        bboxs = np.random.rand(100,4)*100
+        bboxs = bboxs.astype(np.float32)
+        area1 = bbox_11.bbox_area(bboxs)
+        area2 = bbox_area(bboxs)
+        assert np.allclose(area1,area2,1e-4)
+
 if __name__ == "__main__":
     pytest.main(
         [

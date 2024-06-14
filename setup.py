@@ -132,6 +132,7 @@ setup(
         "vispy",
         "imgaug",  # *图像增强库
         "streamlit",  # 自动生成网页的工具
+        "pybind11",     #c++ binding
     ],
     # py_modules=['dataset', 'message', 'multi_works', 'progress', 'video', 'visualization', 'x_logger'],
     extra_compile_args=["-pthread"],  # 启动多线程编译

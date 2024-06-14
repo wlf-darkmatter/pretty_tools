@@ -2,8 +2,17 @@
 #include<pybind11/numpy.h>
 namespace py = pybind11;
 
-py::tuple cy_get_gt_match_from_id(py::array_t<int64_t> np_id_a,
-                                        py::array_t<int64_t> np_id_b
+
+
+// 适用模板，可以绑定多种类型 比如int uint int64 uint64
+// TODO 这个不行，编译报错
+// template<typename dtype>
+// py::tuple cy_get_gt_match_from_id(py::array_t<dtype>& np_id_a,
+//                                         py::array_t<dtype>& np_id_b
+// )
+#define dtype int64_t
+py::tuple cy_get_gt_match_from_id(py::array_t<dtype>& np_id_a,
+                                        py::array_t<dtype>& np_id_b
 )
 {
     int i,j;
@@ -13,8 +22,8 @@ py::tuple cy_get_gt_match_from_id(py::array_t<int64_t> np_id_a,
     uint32_t count = 0;
 
     auto np = py::module::import("numpy");
-  
-    py::array_t<int64_t> matched = np.attr("zeros")(py::make_tuple(K,3),np.attr("int64"));
+    py::print("data type is ",np_id_a.attr("dtype"));
+    py::array_t<dtype> matched = np.attr("zeros")(py::make_tuple(K,3),np_id_a.attr("dtype"));
 
     // 这个提供一个代理，可以访问array的数据，但是不能修改，且不做边界检查（操作不当会越界）
     // 想要能修改，可以使用mutable_unchecked
@@ -61,7 +70,21 @@ void export_misc_11(py::module&& m){
 
     m.doc() = "misc_11 module";
 
-    m.def("cy_get_gt_match_from_id",&cy_get_gt_match_from_id,py::arg("np_id_a"),py::arg("np_id_b"));
+
+    // 返回这块，还有不同策略，可以看看官网
+    // 编译不过
+#ifdef dtype
+    m.def("cy_get_gt_match_from_id",&cy_get_gt_match_from_id);
+#else
+    m.def("cy_get_gt_match_from_id",&cy_get_gt_match_from_id<int64_t>);
+    m.def("cy_get_gt_match_from_id",&cy_get_gt_match_from_id<int32_t>);
+#endif
+    // m.def("cy_get_gt_match_from_id",[](py::array_t<int64_t> np_id_a,
+    //                                     py::array_t<int64_t> np_id_b){
+    //     return cy_get_gt_match_from_id<int64_t>(np_id_a,np_id_b);});
     
+    // m.def("cy_get_gt_match_from_id",[](py::array_t<int32_t> np_id_a,
+    //                                     py::array_t<int32_t> np_id_b){
+    //     return cy_get_gt_match_from_id<int32_t>(np_id_a,np_id_b);});
 
 }
