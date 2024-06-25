@@ -166,6 +166,7 @@ if __name__ == "__main__":
         [
             "-s",
             "-l",
-            "test_misc.py",
+            # "test_misc.py",
+            __file__
         ]
     )
