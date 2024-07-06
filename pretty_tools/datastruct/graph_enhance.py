@@ -1138,7 +1138,7 @@ class MultiGraph_Utils:
         """
         from itertools import combinations
 
-        dict_tmp = {i: v for i, v in enumerate(list_y)}
+        dict_tmp = {i: np.array(v) for i, v in enumerate(list_y)}
         offset = np.cumsum([0] + [len(i) for i in list_y])
         edge_index = []
         for i, j in combinations(dict_tmp.keys(), 2):

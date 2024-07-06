@@ -988,7 +988,7 @@ class Pretty_Draw:
         adj,
         shape: Sequence[int] = None,
         **kwargs: Unpack[Dict_Kwargs_scatter],
-    ):
+    )->  matplotlib.figure.Figure:
         """
         使用细节请看 :func:`Pretty_Draw.draw_edge_index`
         只适用于转换，将数据进行处理后，依旧调用的是 draw_edge_index
