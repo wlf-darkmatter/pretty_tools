@@ -298,7 +298,7 @@ class Safe_Progress(Progress):
     Example:
     -------
 
-    with Safe_Progress() as progress:
+    with Safe_Progress(auto_refresh=True) as progress:
         task_dataset = progress.add_task(description=f"Total Eval ({len(dataset.list_camera)} camera)", total=dataset.num_camera)
         for camera in dataset.list_camera:
 

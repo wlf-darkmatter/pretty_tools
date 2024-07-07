@@ -204,6 +204,8 @@ class Dict_Kwargs_scatter(TypedDict):
 
     cm_aff: str  # *颜色条的名称，默认为 "inferno_r"
 
+    fig_clear: bool  # ?查阅 draw_edge_index 函数参数说明
+
 
 class Pretty_Draw:
     outline = 2
@@ -839,6 +841,7 @@ class Pretty_Draw:
             shape (tuple or list, optional): 如果输入的是 稀疏矩阵 或 列表，这个 shape 则建议输入进来
             scatter_sizes: 散点图的大小范围
 
+            fig_clean: True 表示使用的是 plt.figure(clean=True)，默认 False
         .. note::
             如果输入的不是 :class:`np.ndarray` 类型，则会将其判断为 :class:`torch.Tensor` 类型，并将其转化为 :class:`np.ndarray` 类型
 
@@ -861,6 +864,8 @@ class Pretty_Draw:
         Oij = kwargs.get("Oij", None)  # *左上角偏移原点的位置，默认为 Oij=(x=0, y=0), x 表示左右，y 表示上下
         dpi = kwargs.get("dpi", Pretty_Draw.dpi)
 
+        fig_clear = kwargs.get("fig_clear", False)
+
         # ! edge_index 也要换，因为第一行是 i，应当放在y上，所以这里要进行转换
         assert len(edge_index) == 2
         df_edge = DataFrame(edge_index[::-1].T, columns=[label_x, label_y])
@@ -869,7 +874,7 @@ class Pretty_Draw:
         else:
             df_edge["value"] = 1  # * 全部设置默认的 0.5 的大小
 
-        fig = plt.figure(figsize=(shape[1] / 3 + 1, shape[0] / 3), dpi=dpi)
+        fig = plt.figure(figsize=(shape[1] / 3 + 1, shape[0] / 3), dpi=dpi, clear=fig_clear)
 
         hide_triu = kwargs.get("hide_triu", False)
         hide_tril = kwargs.get("hide_tril", False)
@@ -978,6 +983,7 @@ class Pretty_Draw:
         fig.subplots_adjust(right=0.8)
         # * 画图的设置
         # * frameon 图例的一个小灰盒子背景，图例放到左边
+        # todo 经过不断更换 return 的放置位置，发现下面的这一行代码会造成内存溢出
         sns.move_legend(ax_edge, "upper left", labelspacing=shape[1] / 20, ncol=1, frameon=True, bbox_to_anchor=(1, 1), borderaxespad=5)
 
         return fig
@@ -988,7 +994,7 @@ class Pretty_Draw:
         adj,
         shape: Sequence[int] = None,
         **kwargs: Unpack[Dict_Kwargs_scatter],
-    )->  matplotlib.figure.Figure:
+    ) -> matplotlib.figure.Figure:
         """
         使用细节请看 :func:`Pretty_Draw.draw_edge_index`
         只适用于转换，将数据进行处理后，依旧调用的是 draw_edge_index
@@ -1002,7 +1008,8 @@ class Pretty_Draw:
             adj : The adjacency matrix. 可以是列表，这样会作为主对角线上的方阵进行处理
             shape (tuple or list, optional):
                 如果输入的是 稀疏矩阵 或 列表，这个 shape 则建议输入进来. 默认使用 ``adj`` 的尺寸
-
+        .. note::
+            返回的 Figure 有两个 ax，请在 np_axes[0] 中继续绘制，而不是 fig.gca()
         """
         if isinstance(adj, list):
             # * 如果是列表，必然通过稀疏矩阵的方式进行可视化
