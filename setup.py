@@ -1,5 +1,4 @@
 import os
-from distutils.command.build import build as _build
 
 import numpy as np
 from setuptools import Extension, find_packages, setup
@@ -75,20 +74,21 @@ def get_ext_graph_enhance():
     ]
     return ext_modules_graph_enhance
 
+
 # * =================================  pybind11 编译 _C_misc_11  =============================================
 from pybind11.setup_helpers import Pybind11Extension, build_ext
+
+
 # 把 build_ext 给到setup里面，这样在编译的时候就会自动调用build_ext
 def get_ext_pybind11_ext():
-    
-    src = glob("pretty_tools_cpp/**/*.cpp",recursive=True)
+
+    src = glob("pretty_tools_cpp/**/*.cpp", recursive=True)
     print("pretty_tools_cpp: ", src)
     ext_modules_pybind11_misc = [
         Pybind11Extension(
             name="pretty_tools._C_pretty_tools",
             sources=src,
             include_dirs=["./pretty_tools_cpp"],
-            
-            
         )
     ]
     return ext_modules_pybind11_misc
@@ -100,6 +100,7 @@ def get_all_ext_modules():
     ext_modules = ext_modules + get_ext_pybind11_ext()
 
     return ext_modules
+
 
 setup(
     name="pretty_tools",
@@ -115,6 +116,7 @@ setup(
     classifiers=[
         "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3.12",
+        "Programming Language :: Python :: 3.13",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
@@ -132,7 +134,7 @@ setup(
         "vispy",
         "imgaug",  # *图像增强库
         "streamlit",  # 自动生成网页的工具
-        "pybind11",     #c++ binding
+        "pybind11",  # c++ binding
     ],
     # py_modules=['dataset', 'message', 'multi_works', 'progress', 'video', 'visualization', 'x_logger'],
     extra_compile_args=["-pthread"],  # 启动多线程编译
