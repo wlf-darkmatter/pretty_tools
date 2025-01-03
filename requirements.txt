@@ -21,3 +21,4 @@ nptyping # numpy 类型提示
 line_profiler
 objgraph
 scipy>=1.11.0
+numpy>=1.24.0

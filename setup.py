@@ -16,7 +16,6 @@ except AttributeError:
     numpy_include = np.get_numpy_include()
 
 
-
 def get_all_ext_modules():
     ext_modules = []
 
@@ -33,7 +32,7 @@ setup(
     packages=find_packages(),
     # cmdclass={"build_ext": build_ext},
     ext_modules=get_all_ext_modules(),
-    setup_requires=["setuptools>=18.0", "Cython", "numpy"],
+    setup_requires=["setuptools>=60.0", "Cython", "numpy"],
     classifiers=[
         "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3.12",
@@ -56,5 +55,5 @@ setup(
         "pybind11",  # c++ binding
     ],
     # py_modules=['dataset', 'message', 'multi_works', 'progress', 'video', 'visualization', 'x_logger'],
-    extra_compile_args=["-pthread"],  # 启动多线程编译
+    # extra_compile_args=["-pthread"],  # 启动多线程编译
 )
