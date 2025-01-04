@@ -24,7 +24,7 @@ def get_all_ext_modules():
 
 setup(
     name="pretty_tools",
-    version="0.2.1",
+    version="0.3.0",
     author="Lingfeng Wang",
     author_email="wlf_x_contion@sina.com",
     description="A pretty tools",
@@ -32,7 +32,7 @@ setup(
     packages=find_packages(),
     # cmdclass={"build_ext": build_ext},
     ext_modules=get_all_ext_modules(),
-    setup_requires=["setuptools>=60.0", "Cython", "numpy"],
+    setup_requires=["setuptools>=68.2", "Cython", "numpy"],
     classifiers=[
         "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3.12",
