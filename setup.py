@@ -2,7 +2,6 @@ import os
 
 import numpy as np
 from setuptools import Extension, find_packages, setup
-from glob import glob
 
 
 if os.name == "nt":
@@ -50,7 +49,6 @@ setup(
         "iteration_utilities",
         "colorlog",
         "joblib",
-        "vispy",
         "imgaug",  # *图像增强库
         "pybind11",  # c++ binding
     ],
